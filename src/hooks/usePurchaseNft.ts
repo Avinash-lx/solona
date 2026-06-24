@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { PublicKey } from '@solana/web3.js';
 import { useMarketplaceClient } from './useMarketplaceClient';
 import { useTxRunner } from './useTxRunner';
+import { config } from '../lib/config';
 import { queryKeys } from '../lib/queryClient';
 import type { Listing } from '../types';
 
@@ -12,10 +13,19 @@ export function usePurchaseNft() {
   const client = useMarketplaceClient();
   const { publicKey } = useWallet();
   const queryClient = useQueryClient();
-  const { status, run, reset } = useTxRunner();
+  const { status, run, simulate, reset } = useTxRunner();
 
   const purchase = useCallback(
     async (listing: Listing) => {
+      if (config.demoMode) {
+        const { useDemoStore } = await import('../stores/demoStore');
+        return simulate({
+          pendingTitle: 'Purchasing NFT…',
+          successTitle: 'Purchase complete 🎉',
+          successDescription: 'The NFT is now in your wallet.',
+          apply: () => useDemoStore.getState().buyNft(listing.address),
+        });
+      }
       if (!publicKey) return null;
       const ix = await client.purchaseNftIx(
         publicKey,
@@ -46,7 +56,7 @@ export function usePurchaseNft() {
         },
       });
     },
-    [client, publicKey, queryClient, run],
+    [client, publicKey, queryClient, run, simulate],
   );
 
   return { purchase, status, reset };

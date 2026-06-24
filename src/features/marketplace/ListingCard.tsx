@@ -19,8 +19,18 @@ export function ListingCard({ listing, onBuy }: ListingCardProps) {
 
   return (
     <div className="card group flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:ring-1 hover:ring-brand-400/40">
-      <Link to={`/nft/${listing.nftMint}`} className="relative block" aria-label={`View ${name}`}>
-        <NftImage src={listing.metadata?.image ?? null} alt={name} className="aspect-square w-full" />
+      <Link
+        to={`/nft/${listing.nftMint}`}
+        className="relative block overflow-hidden"
+        aria-label={`View ${name}`}
+      >
+        <NftImage
+          src={listing.metadata?.image ?? null}
+          alt={name}
+          className="aspect-square w-full transition-transform duration-500 ease-out group-hover:scale-110"
+        />
+        {/* Subtle bottom gradient for legibility / depth on hover. */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <div className="absolute right-2 top-2">
           <FavoriteButton mint={listing.nftMint} />
         </div>

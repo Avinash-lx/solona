@@ -31,9 +31,10 @@ export const config = {
   /**
    * Demo mode seeds the read models with self-contained sample data (offline
    * SVG art) so the marketplace renders fully populated without on-chain state.
-   * Never sends transactions. Great for screenshots / first-run UX.
+   * Defaults ON (only `VITE_DEMO_MODE=false` disables it) so a fresh install is
+   * never a dead, empty screen. Never sends transactions.
    */
-  demoMode: import.meta.env.VITE_DEMO_MODE === 'true',
+  demoMode: import.meta.env.VITE_DEMO_MODE !== 'false',
 } as const;
 
 export const LAMPORTS_PER_SOL = 1_000_000_000;

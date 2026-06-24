@@ -61,6 +61,29 @@ export function useMintNft() {
 
   const mint = useCallback(
     async (input: MintInput): Promise<string | null> => {
+      // Demo mode: mint entirely client-side (no wallet / Irys / chain).
+      if (config.demoMode) {
+        setStatus({ stage: 'minting' });
+        const image = input.imageFile
+          ? URL.createObjectURL(input.imageFile)
+          : input.imageUrl || null;
+        const { useDemoStore } = await import('../stores/demoStore');
+        const mintAddress = useDemoStore.getState().mintNft({
+          name: input.name,
+          symbol: input.symbol,
+          description: input.description,
+          image,
+          attributes: input.attributes,
+        });
+        setStatus({ stage: 'done', mintAddress });
+        notify({
+          variant: 'success',
+          title: 'NFT minted 🎉',
+          description: `${input.name} is now in your wallet. List it from your Portfolio.`,
+        });
+        return mintAddress;
+      }
+
       if (!wallet.connected || !wallet.publicKey) {
         notify({ variant: 'error', title: 'Connect a wallet first.' });
         return null;
