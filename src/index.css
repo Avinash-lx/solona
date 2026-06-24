@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Visible focus ring for keyboard users across the app (a11y). */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold
+      transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand-400 text-white hover:bg-brand-500;
+  }
+  .btn-secondary {
+    @apply btn border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100
+      dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700;
+  }
+  .btn-ghost {
+    @apply btn text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800;
+  }
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm
+      placeholder:text-zinc-400 focus:border-brand-400
+      dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden bg-zinc-200 dark:bg-zinc-800;
+  }
+  .skeleton::after {
+    @apply absolute inset-0 -translate-x-full animate-shimmer
+      bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/10;
+    content: '';
+  }
+}
+
+/* Tailwind-friendly restyle of the wallet-adapter button. */
+.wallet-adapter-button {
+  @apply !rounded-xl !bg-brand-400 !px-4 !py-2 !text-sm !font-semibold !h-auto hover:!bg-brand-500;
+  font-family: inherit !important;
+}
+.wallet-adapter-button-trigger {
+  @apply !bg-brand-400;
+}
+.wallet-adapter-modal-wrapper {
+  @apply !bg-white dark:!bg-zinc-900;
+}
