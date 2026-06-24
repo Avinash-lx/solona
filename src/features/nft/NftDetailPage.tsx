@@ -122,7 +122,7 @@ export function NftDetailPage() {
 
         {listing && <WatchlistAlert mint={mint} />}
 
-        <OffersPanel />
+        <OffersPanel mint={mint} listing={listing} />
 
         {metadata && metadata.attributes.length > 0 && (
           <div className="card p-5">

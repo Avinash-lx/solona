@@ -37,3 +37,9 @@ coverage
 
 # TS build info
 *.tsbuildinfo
+
+# Anchor / Rust build artifacts
+anchor/target
+anchor/.anchor
+anchor/node_modules
+**/*.rs.bk
