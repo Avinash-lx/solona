@@ -18,7 +18,7 @@ export function ListingCard({ listing, onBuy }: ListingCardProps) {
   const collection = listing.metadata?.collection;
 
   return (
-    <div className="card group flex flex-col overflow-hidden transition-shadow hover:shadow-md">
+    <div className="card group flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:ring-1 hover:ring-brand-400/40">
       <Link to={`/nft/${listing.nftMint}`} className="relative block" aria-label={`View ${name}`}>
         <NftImage src={listing.metadata?.image ?? null} alt={name} className="aspect-square w-full" />
         <div className="absolute right-2 top-2">

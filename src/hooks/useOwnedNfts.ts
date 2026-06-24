@@ -3,6 +3,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useQuery } from '@tanstack/react-query';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNftMetadataBatch } from './useNftMetadata';
+import { config } from '../lib/config';
 import { queryKeys } from '../lib/queryClient';
 import type { OwnedNft } from '../types';
 
@@ -26,6 +27,10 @@ export function useOwnedNfts() {
     queryKey: queryKeys.ownedNfts(owner),
     enabled: Boolean(publicKey),
     queryFn: async () => {
+      if (config.demoMode) {
+        const { DEMO_OWNED } = await import('../lib/demo/demoData');
+        return DEMO_OWNED.map((n) => ({ mint: n.mint, tokenAccount: n.tokenAccount, amount: n.amount }));
+      }
       const res = await connection.getParsedTokenAccountsByOwner(
         publicKey!,
         { programId: TOKEN_PROGRAM_ID },

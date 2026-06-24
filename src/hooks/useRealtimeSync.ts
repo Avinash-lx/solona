@@ -45,6 +45,9 @@ export function useRealtimeSync(): void {
   });
 
   useEffect(() => {
+    // Demo mode is fully client-side; there are no on-chain accounts to watch.
+    if (config.demoMode) return;
+
     const pushActivity = (kind: ActivityKind, data: Partial<Listing> & { name?: string }) => {
       useActivityStore.getState().push({
         id: makeId('act'),

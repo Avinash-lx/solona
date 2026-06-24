@@ -1,6 +1,7 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import { Header } from './components/layout/Header';
 import { NetworkBanner } from './components/layout/NetworkBanner';
+import { DemoBanner } from './components/layout/DemoBanner';
 import { ToastViewport } from './components/toast/ToastViewport';
 import { Footer } from './components/layout/Footer';
 import { MarketplacePage } from './features/marketplace/MarketplacePage';
@@ -17,6 +18,7 @@ export function App() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <DemoBanner />
       <NetworkBanner />
       <Header />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">

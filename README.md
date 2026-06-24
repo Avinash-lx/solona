@@ -30,6 +30,20 @@ npm install
 npm run dev               # http://localhost:5173, talking to Devnet
 ```
 
+### See it populated immediately (demo mode)
+
+A live Devnet marketplace needs an initialized config + real listings before the
+grid shows anything. To explore the full UX **without** any wallet or on-chain
+state, enable demo mode — it seeds realistic sample listings/NFTs with offline
+SVG art (no network, never sends transactions):
+
+```bash
+echo "VITE_DEMO_MODE=true" >> .env
+npm run dev
+```
+
+A banner makes it clear the data is seeded. Set it back to `false` for live Devnet.
+
 Other scripts:
 
 ```bash
