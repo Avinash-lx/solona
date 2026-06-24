@@ -6,6 +6,7 @@ import { ToastViewport } from './components/toast/ToastViewport';
 import { Footer } from './components/layout/Footer';
 import { MarketplacePage } from './features/marketplace/MarketplacePage';
 import { MintPage } from './features/mint/MintPage';
+import { AnalyticsPage } from './features/analytics/AnalyticsPage';
 import { PortfolioPage } from './features/portfolio/PortfolioPage';
 import { FavoritesPage } from './features/favorites/FavoritesPage';
 import { AdminPage } from './features/admin/AdminPage';
@@ -26,6 +27,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<MarketplacePage />} />
           <Route path="/mint" element={<MintPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/admin" element={<AdminPage />} />

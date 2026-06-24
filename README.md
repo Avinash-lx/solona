@@ -135,7 +135,14 @@ The platform supports the full NFT lifecycle on Devnet:
 - **Wallet**: multi-wallet connect modal, address + live SOL balance, Devnet
   mismatch banner.
 - **Mint / Create**: Metaplex 1/1 NFT minting with image/metadata upload (Irys)
-  or a direct metadata URI.
+  or a direct metadata URI, plus **✨ AI name & description generation**.
+- **AI-assist**: generate NFT names/descriptions on mint and **fair-price
+  suggestions** when listing (local heuristic by default; set `VITE_AI_PROXY_URL`
+  to a serverless Claude proxy for real-model output, key stays server-side).
+- **Analytics** (`/analytics`, "Stats"): KPI cards, a collection leaderboard
+  (floor / avg / top / listed), a recent-sales feed, and a rarity leaderboard.
+- **Pro trading**: **Sweep the floor** — buy the N cheapest listings in one
+  action (filter to a collection first to sweep just that one).
 - **Browse**: live grid of active listings with image, name, collection, price,
   seller; lazy images + skeletons.
 - **Search & filter**: by name/collection/price range, sort (price ↑/↓, recent,

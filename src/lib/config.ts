@@ -35,6 +35,13 @@ export const config = {
    * never a dead, empty screen. Never sends transactions.
    */
   demoMode: import.meta.env.VITE_DEMO_MODE !== 'false',
+  ai: {
+    /**
+     * Optional URL of a serverless endpoint that proxies to Claude (keeps the
+     * API key server-side). If unset, AI-assist uses a local heuristic.
+     */
+    proxyUrl: import.meta.env.VITE_AI_PROXY_URL || '',
+  },
 } as const;
 
 export const LAMPORTS_PER_SOL = 1_000_000_000;

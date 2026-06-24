@@ -12,6 +12,7 @@ import { BuyModal } from './BuyModal';
 import { ActivityFeed } from './ActivityFeed';
 import { FloorTicker } from './FloorTicker';
 import { Hero } from './Hero';
+import { SweepBar } from './SweepBar';
 import type { EnrichedListing } from '../../types';
 
 /** The browse view: filterable, sortable grid + live activity + floor tracker. */
@@ -48,6 +49,7 @@ export function MarketplacePage() {
             onChange={setFilter}
             onReset={reset}
           />
+          <SweepBar listings={filtered} />
           <ListingGrid
             listings={filtered}
             isLoading={isLoading}
