@@ -43,17 +43,28 @@ export function decodeMarketplace(
   return normalizeMarketplace(address, raw);
 }
 
+/**
+ * Read a decoded field by either camelCase or snake_case key. The bundled IDL
+ * uses camelCase, but an IDL regenerated from the deployed program via
+ * `anchor idl fetch` will use snake_case — this keeps the read path correct
+ * either way without re-touching the decoder.
+ */
+function field<T>(raw: Record<string, unknown>, camel: string, snake: string): T {
+  return (raw[camel] ?? raw[snake]) as T;
+}
+
 export function normalizeMarketplace(
   address: PublicKey,
   raw: MarketplaceAccountRaw,
 ): Marketplace {
+  const r = raw as unknown as Record<string, unknown>;
   return {
     address: address.toBase58(),
-    authority: raw.authority.toBase58(),
-    treasury: raw.treasury.toBase58(),
-    feeBps: raw.feeBps,
-    name: raw.name,
-    listingsCount: raw.listingsCount.toNumber(),
+    authority: field<PublicKey>(r, 'authority', 'authority').toBase58(),
+    treasury: field<PublicKey>(r, 'treasury', 'treasury').toBase58(),
+    feeBps: field<number>(r, 'feeBps', 'fee_bps'),
+    name: field<string>(r, 'name', 'name'),
+    listingsCount: field<{ toNumber(): number }>(r, 'listingsCount', 'listings_count').toNumber(),
   };
 }
 
@@ -66,15 +77,16 @@ export function decodeListing(
 }
 
 export function normalizeListing(address: PublicKey, raw: ListingAccountRaw): Listing {
-  const priceLamports = raw.price.toNumber();
+  const r = raw as unknown as Record<string, unknown>;
+  const priceLamports = field<{ toNumber(): number }>(r, 'price', 'price').toNumber();
   return {
     address: address.toBase58(),
-    seller: raw.seller.toBase58(),
-    nftMint: raw.nftMint.toBase58(),
-    vault: raw.vault.toBase58(),
+    seller: field<PublicKey>(r, 'seller', 'seller').toBase58(),
+    nftMint: field<PublicKey>(r, 'nftMint', 'nft_mint').toBase58(),
+    vault: field<PublicKey>(r, 'vault', 'vault').toBase58(),
     priceLamports,
     priceSol: priceLamports / LAMPORTS_PER_SOL,
-    createdAt: raw.createdAt.toNumber(),
+    createdAt: field<{ toNumber(): number }>(r, 'createdAt', 'created_at').toNumber(),
   };
 }
 

@@ -30,6 +30,8 @@ interface DemoState {
   listNft: (mint: string, priceSol: number) => void;
   buyNft: (listingAddress: string) => void;
   delistNft: (mint: string) => void;
+  /** Listing sold to an external buyer (e.g. an accepted offer): just removed. */
+  sellListing: (mint: string, priceSol: number) => void;
   getMetadata: (mint: string) => NftMetadata | null;
 }
 
@@ -126,5 +128,11 @@ export const useDemoStore = create<DemoState>((set, get) => ({
       ],
     }));
     pushActivity('delist', { mint, priceSol: listing.priceSol });
+  },
+
+  sellListing: (mint, priceSol) => {
+    if (!get().listings.some((l) => l.nftMint === mint)) return;
+    set((s) => ({ listings: s.listings.filter((l) => l.nftMint !== mint) }));
+    pushActivity('sale', { mint, priceSol });
   },
 }));
