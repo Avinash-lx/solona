@@ -18,6 +18,11 @@ export function useListings() {
   return useQuery<Listing[]>({
     queryKey: queryKeys.listings,
     queryFn: async () => {
+      // Demo mode: serve seeded listings, no RPC.
+      if (config.demoMode) {
+        const { DEMO_LISTINGS } = await import('../lib/demo/demoData');
+        return DEMO_LISTINGS;
+      }
       const accounts = await connection.getProgramAccounts(config.programId, {
         commitment: 'confirmed',
         filters: [{ memcmp: { offset: 0, bytes: bs58Encode(LISTING_DISCRIMINATOR) } }],

@@ -86,8 +86,13 @@ export function PortfolioPage() {
           ) : owned.nfts.length === 0 ? (
             <EmptyState
               title="No NFTs in this wallet"
-              description="NFTs you hold on Devnet will appear here, ready to list."
+              description="Mint one to get started — it'll appear here, ready to list."
               icon="🎨"
+              action={
+                <Link to="/mint" className="btn-primary">
+                  Mint an NFT
+                </Link>
+              }
             />
           ) : (
             <Grid>

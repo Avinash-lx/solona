@@ -30,6 +30,20 @@ npm install
 npm run dev               # http://localhost:5173, talking to Devnet
 ```
 
+### See it populated immediately (demo mode)
+
+A live Devnet marketplace needs an initialized config + real listings before the
+grid shows anything. To explore the full UX **without** any wallet or on-chain
+state, enable demo mode — it seeds realistic sample listings/NFTs with offline
+SVG art (no network, never sends transactions):
+
+```bash
+echo "VITE_DEMO_MODE=true" >> .env
+npm run dev
+```
+
+A banner makes it clear the data is seeded. Set it back to `false` for live Devnet.
+
 Other scripts:
 
 ```bash
@@ -88,10 +102,32 @@ listing     = ["listing",     marketplace, nftMint]
 vault       = ["vault",       marketplace, nftMint]   # program-owned escrow token account
 ```
 
+## End-to-end flow: mint → list → buy → sell
+
+The platform supports the full NFT lifecycle on Devnet:
+
+1. **Mint** (`/mint`, "Create" tab): mints a real 1/1 NFT into your wallet via
+   Metaplex Token Metadata. Upload an image (stored on Irys) or point at an
+   existing metadata JSON URI. This is independent of the marketplace program —
+   it just gives you something to trade. Needs a little Devnet SOL (use a
+   faucet); the Irys-free path accepts a ready-made metadata URI.
+2. **List** (`/portfolio` → Owned NFTs → *List for sale*): escrows the NFT into
+   the program vault PDA at your chosen price.
+3. **Buy** (`/`): any other wallet purchases it; SOL is split between seller and
+   the marketplace treasury, and the NFT transfers to the buyer.
+4. **Sell / delist**: it sells automatically when bought, or you can delist from
+   *My Active Listings* to pull it back out of escrow.
+
+> Steps 2–4 require the marketplace program to be deployed and initialized
+> (`/admin` → Initialize, once). Step 1 works on its own. If you just want to see
+> the UI populated without any of this, use **demo mode** (above).
+
 ## Features
 
 - **Wallet**: multi-wallet connect modal, address + live SOL balance, Devnet
   mismatch banner.
+- **Mint / Create**: Metaplex 1/1 NFT minting with image/metadata upload (Irys)
+  or a direct metadata URI.
 - **Browse**: live grid of active listings with image, name, collection, price,
   seller; lazy images + skeletons.
 - **Search & filter**: by name/collection/price range, sort (price ↑/↓, recent,
