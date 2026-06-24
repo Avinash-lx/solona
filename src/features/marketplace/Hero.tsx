@@ -1,0 +1,44 @@
+import { formatSol } from '../../lib/utils';
+
+interface HeroProps {
+  listingCount: number;
+  collectionCount: number;
+  floorSol: number | null;
+}
+
+/** Marketplace hero band with headline + at-a-glance live stats. */
+export function Hero({ listingCount, collectionCount, floorSol }: HeroProps) {
+  return (
+    <section className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-brand-500 via-brand-400 to-accent p-8 text-white shadow-lg dark:border-zinc-800 sm:p-10">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-20 left-1/3 h-64 w-64 rounded-full bg-black/10 blur-2xl" />
+      <div className="relative">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> Live on Solana Devnet
+        </span>
+        <h1 className="mt-4 max-w-2xl text-3xl font-extrabold leading-tight sm:text-4xl">
+          Discover, collect, and trade NFTs in real time
+        </h1>
+        <p className="mt-2 max-w-xl text-sm text-white/80">
+          Every listing is read straight from on-chain accounts and updates instantly — no backend,
+          no polling.
+        </p>
+
+        <dl className="mt-6 flex flex-wrap gap-x-10 gap-y-3">
+          <Stat label="Active listings" value={String(listingCount)} />
+          <Stat label="Collections" value={String(collectionCount)} />
+          <Stat label="Floor price" value={floorSol != null ? `${formatSol(floorSol)} SOL` : '—'} />
+        </dl>
+      </div>
+    </section>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dd className="text-2xl font-extrabold tabular-nums">{value}</dd>
+      <dt className="text-xs font-medium uppercase tracking-wide text-white/70">{label}</dt>
+    </div>
+  );
+}

@@ -11,6 +11,7 @@ import { ListingGrid } from './ListingGrid';
 import { BuyModal } from './BuyModal';
 import { ActivityFeed } from './ActivityFeed';
 import { FloorTicker } from './FloorTicker';
+import { Hero } from './Hero';
 import type { EnrichedListing } from '../../types';
 
 /** The browse view: filterable, sortable grid + live activity + floor tracker. */
@@ -23,14 +24,18 @@ export function MarketplacePage() {
   const filtered = useMemo(() => applyFilters(listings, filters), [listings, filters]);
   const floors = useFloorTracker(listings);
 
+  const globalFloor = useMemo(
+    () => (listings.length ? Math.min(...listings.map((l) => l.priceSol)) : null),
+    [listings],
+  );
+
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-extrabold">Marketplace</h1>
-        <p className="text-sm text-zinc-500">
-          Live on-chain listings on Solana Devnet — updates stream in real time.
-        </p>
-      </div>
+      <Hero
+        listingCount={listings.length}
+        collectionCount={collections.length}
+        floorSol={globalFloor}
+      />
 
       <FloorTicker floors={floors} />
 

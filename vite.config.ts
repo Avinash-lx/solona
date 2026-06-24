@@ -49,6 +49,7 @@ export default defineConfig({
       VITE_NETWORK: 'devnet',
       VITE_MARKETPLACE_NAME: 'test-marketplace',
       VITE_FEATURE_OFFERS: 'false',
+      VITE_DEMO_MODE: 'false',
     },
   },
 });
