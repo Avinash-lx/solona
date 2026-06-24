@@ -22,7 +22,7 @@ const PALETTES: [string, string][] = [
 ];
 
 /** Build a deterministic gradient SVG (as a data-URI) for a demo NFT. */
-function svgImage(seed: number, label: string): string {
+export function svgImage(seed: number, label: string): string {
   const [a, b] = PALETTES[seed % PALETTES.length];
   const initials = label.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 2).toUpperCase();
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'>
@@ -109,4 +109,37 @@ export const DEMO_OWNED: OwnedNft[] = SEEDS.slice(10).map((s) => ({
 
 export function getDemoMetadata(mint: string): NftMetadata | null {
   return DEMO_METADATA[mint] ?? null;
+}
+
+const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+/** Generate a realistic-looking 44-char base58 mint address for demo NFTs. */
+export function genDemoMint(): string {
+  let out = '';
+  for (let i = 0; i < 44; i++) out += BASE58[Math.floor(Math.random() * BASE58.length)];
+  return out;
+}
+
+/** The demo "current user" wallet address (so listings can show a seller). */
+export const DEMO_WALLET = 'DemoUser1111111111111111111111111111111111';
+
+/** Build metadata for a freshly "minted" demo NFT. */
+export function makeDemoMetadata(args: {
+  mint: string;
+  name: string;
+  symbol?: string;
+  description?: string;
+  image?: string | null;
+  attributes?: { trait_type: string; value: string }[];
+}): NftMetadata {
+  return {
+    mint: args.mint,
+    name: args.name || 'Untitled NFT',
+    symbol: args.symbol || '',
+    image: args.image || svgImage(Math.floor(Math.random() * 999), args.name || 'NFT'),
+    description: args.description || 'Minted in demo mode — fully client-side, no chain required.',
+    collection: 'My Mints',
+    attributes: (args.attributes ?? []).filter((a) => a.trait_type && a.value),
+    uri: '',
+  };
 }

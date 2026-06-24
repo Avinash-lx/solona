@@ -1,15 +1,15 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { fetchNftMetadata } from '../lib/solana/metadata';
-import { getDemoMetadata } from '../lib/demo/demoData';
+import { useDemoStore } from '../stores/demoStore';
 import { config } from '../lib/config';
 import { queryKeys } from '../lib/queryClient';
 import type { NftMetadata } from '../types';
 
-/** Resolve metadata, short-circuiting to seeded demo data in demo mode. */
+/** Resolve metadata, short-circuiting to live demo data in demo mode. */
 function resolveMetadata(mint: string, signal?: AbortSignal): Promise<NftMetadata | null> {
   if (config.demoMode) {
-    const demo = getDemoMetadata(mint);
-    if (demo) return Promise.resolve(demo);
+    const demo = useDemoStore.getState().getMetadata(mint);
+    return Promise.resolve(demo);
   }
   return fetchNftMetadata(mint, signal);
 }

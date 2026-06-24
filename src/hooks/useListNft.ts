@@ -6,7 +6,7 @@ import { useMarketplaceClient } from './useMarketplaceClient';
 import { useTxRunner } from './useTxRunner';
 import { findListingPda, findVaultPda } from '../lib/anchor/pdas';
 import { solToLamports } from '../lib/anchor/feeMath';
-import { LAMPORTS_PER_SOL } from '../lib/config';
+import { LAMPORTS_PER_SOL, config } from '../lib/config';
 import { queryKeys } from '../lib/queryClient';
 import type { Listing } from '../types';
 
@@ -15,10 +15,19 @@ export function useListNft() {
   const client = useMarketplaceClient();
   const { publicKey } = useWallet();
   const queryClient = useQueryClient();
-  const { status, run, reset } = useTxRunner();
+  const { status, run, simulate, reset } = useTxRunner();
 
   const list = useCallback(
     async (mint: string, priceSol: number) => {
+      if (config.demoMode) {
+        const { useDemoStore } = await import('../stores/demoStore');
+        return simulate({
+          pendingTitle: 'Listing NFT…',
+          successTitle: 'NFT listed',
+          successDescription: `Listed for ${priceSol} SOL.`,
+          apply: () => useDemoStore.getState().listNft(mint, priceSol),
+        });
+      }
       if (!publicKey) return null;
       const nftMint = new PublicKey(mint);
       const priceLamports = solToLamports(priceSol);
@@ -53,7 +62,7 @@ export function useListNft() {
         },
       });
     },
-    [client, publicKey, queryClient, run],
+    [client, publicKey, queryClient, run, simulate],
   );
 
   return { list, status, reset };

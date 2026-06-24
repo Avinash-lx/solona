@@ -30,19 +30,27 @@ npm install
 npm run dev               # http://localhost:5173, talking to Devnet
 ```
 
-### See it populated immediately (demo mode)
+### Interactive demo mode (on by default)
 
-A live Devnet marketplace needs an initialized config + real listings before the
-grid shows anything. To explore the full UX **without** any wallet or on-chain
-state, enable demo mode — it seeds realistic sample listings/NFTs with offline
-SVG art (no network, never sends transactions):
+A live Devnet marketplace needs an initialized program + real listings before
+anything shows. So **demo mode is ON by default** — and it's fully interactive:
+you can **mint → list → buy → delist** entirely client-side, with no wallet, no
+RPC, and no deployed program. Sample NFTs use offline SVG art; a banner makes it
+clear the data is seeded, and nothing ever touches the chain.
 
 ```bash
-echo "VITE_DEMO_MODE=true" >> .env
+npm run dev               # demo mode is on unless you disable it
+```
+
+To run against **live Devnet** on-chain data instead:
+
+```bash
+echo "VITE_DEMO_MODE=false" >> .env
 npm run dev
 ```
 
-A banner makes it clear the data is seeded. Set it back to `false` for live Devnet.
+In live mode, mint/list/buy/sell use the real Metaplex + marketplace program
+(the latter must be deployed + initialized — see Admin setup).
 
 Other scripts:
 
