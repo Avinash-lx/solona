@@ -4,6 +4,7 @@ import { useMintNft, type MintStage } from '../../hooks/useMintNft';
 import { ConnectGate } from '../../components/wallet/ConnectGate';
 import { NftImage } from '../../components/NftImage';
 import { Spinner } from '../../components/ui/Spinner';
+import { generateNftIdea } from '../../lib/ai/aiAssist';
 import { explorerUrl } from '../../lib/config';
 import { shortenAddress } from '../../lib/utils';
 
@@ -41,6 +42,22 @@ function MintInner() {
   const [attributes, setAttributes] = useState<Attr[]>([{ trait_type: '', value: '' }]);
   const [advanced, setAdvanced] = useState(false);
   const [metadataUri, setMetadataUri] = useState('');
+  const [aiBusy, setAiBusy] = useState(false);
+
+  const generateWithAi = async () => {
+    setAiBusy(true);
+    try {
+      const idea = await generateNftIdea({
+        name,
+        collection: undefined,
+        attributes: attributes.filter((a) => a.trait_type && a.value),
+      });
+      if (!name.trim()) setName(idea.name);
+      setDescription(idea.description);
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   const previewUrl = useMemo(
     () => (imageFile ? URL.createObjectURL(imageFile) : imageUrl || null),
@@ -142,6 +159,15 @@ function MintInner() {
 
         {/* Fields */}
         <div className="space-y-3">
+          <button
+            type="button"
+            onClick={generateWithAi}
+            disabled={aiBusy}
+            className="btn-secondary w-full justify-center text-sm"
+          >
+            {aiBusy ? <Spinner /> : '✨'} Generate name & description with AI
+          </button>
+
           <Field label="Name" required>
             <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="My Cool NFT" />
           </Field>
