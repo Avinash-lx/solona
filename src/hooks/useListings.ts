@@ -4,25 +4,33 @@ import { PublicKey } from '@solana/web3.js';
 import { config } from '../lib/config';
 import { LISTING_DISCRIMINATOR, decodeListing } from '../lib/anchor/decoders';
 import { bs58Encode } from '../lib/solana/encoding';
+import { useDemoStore } from '../stores/demoStore';
 import { queryKeys } from '../lib/queryClient';
 import type { Listing } from '../types';
 
-/**
- * Fetches all active on-chain `Listing` accounts via getProgramAccounts,
- * filtered server-side by the account discriminator. The subscription layer
- * (useRealtimeSync) keeps this query fresh, so we avoid polling.
- */
-export function useListings() {
-  const { connection } = useConnection();
+export interface ListingsResult {
+  data: Listing[] | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  refetch: () => void;
+}
 
-  return useQuery<Listing[]>({
+/**
+ * Active listings. In demo mode they come from the live client-side demo store
+ * (instant updates as you mint/list/buy); otherwise they're fetched from the
+ * program's `Listing` accounts via getProgramAccounts (kept fresh by
+ * useRealtimeSync — no polling).
+ */
+export function useListings(): ListingsResult {
+  const { connection } = useConnection();
+  // Subscribe to the demo store so demo mutations re-render the grid.
+  const demoListings = useDemoStore((s) => s.listings);
+
+  const query = useQuery<Listing[]>({
     queryKey: queryKeys.listings,
+    enabled: !config.demoMode,
     queryFn: async () => {
-      // Demo mode: serve seeded listings, no RPC.
-      if (config.demoMode) {
-        const { DEMO_LISTINGS } = await import('../lib/demo/demoData');
-        return DEMO_LISTINGS;
-      }
       const accounts = await connection.getProgramAccounts(config.programId, {
         commitment: 'confirmed',
         filters: [{ memcmp: { offset: 0, bytes: bs58Encode(LISTING_DISCRIMINATOR) } }],
@@ -38,6 +46,17 @@ export function useListings() {
       return listings;
     },
   });
+
+  if (config.demoMode) {
+    return { data: demoListings, isLoading: false, isError: false, error: null, refetch: () => {} };
+  }
+  return {
+    data: query.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+  };
 }
 
 /** Find a single listing in the cached set by mint (cheap, no extra RPC). */

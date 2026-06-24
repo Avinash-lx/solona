@@ -3,6 +3,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useQuery } from '@tanstack/react-query';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNftMetadataBatch } from './useNftMetadata';
+import { useDemoStore } from '../stores/demoStore';
 import { config } from '../lib/config';
 import { queryKeys } from '../lib/queryClient';
 import type { OwnedNft } from '../types';
@@ -14,23 +15,22 @@ interface RawOwnedToken {
 }
 
 /**
- * NFTs currently held in the connected wallet: SPL token accounts with a
- * balance of 1 and 0 decimals. Escrowed (listed) NFTs live in a vault PDA, so
- * they correctly do NOT appear here. Metadata is resolved per-mint and cached.
+ * NFTs currently held in the wallet (SPL token accounts with balance 1 / 0
+ * decimals). In demo mode this is the live client-side owned set so newly
+ * minted / delisted / bought NFTs appear instantly. Escrowed (listed) NFTs
+ * live in a vault, so they correctly do NOT appear here.
  */
 export function useOwnedNfts() {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
   const owner = publicKey?.toBase58() ?? '';
+  // Subscribe to the demo owned set so mint/buy/delist re-render the portfolio.
+  const demoOwned = useDemoStore((s) => s.owned);
 
   const tokensQuery = useQuery<RawOwnedToken[]>({
     queryKey: queryKeys.ownedNfts(owner),
-    enabled: Boolean(publicKey),
+    enabled: Boolean(publicKey) && !config.demoMode,
     queryFn: async () => {
-      if (config.demoMode) {
-        const { DEMO_OWNED } = await import('../lib/demo/demoData');
-        return DEMO_OWNED.map((n) => ({ mint: n.mint, tokenAccount: n.tokenAccount, amount: n.amount }));
-      }
       const res = await connection.getParsedTokenAccountsByOwner(
         publicKey!,
         { programId: TOKEN_PROGRAM_ID },
@@ -66,6 +66,17 @@ export function useOwnedNfts() {
       })),
     [tokensQuery.data, metadataByMint],
   );
+
+  if (config.demoMode) {
+    return {
+      nfts: demoOwned,
+      isLoading: false,
+      isMetadataLoading: false,
+      isError: false,
+      error: null,
+      refetch: () => {},
+    };
+  }
 
   return {
     nfts,

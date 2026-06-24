@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { PublicKey } from '@solana/web3.js';
 import { useMarketplaceClient } from './useMarketplaceClient';
 import { useTxRunner } from './useTxRunner';
+import { config } from '../lib/config';
 import { queryKeys } from '../lib/queryClient';
 import type { Listing } from '../types';
 
@@ -12,10 +13,19 @@ export function useDelistNft() {
   const client = useMarketplaceClient();
   const { publicKey } = useWallet();
   const queryClient = useQueryClient();
-  const { status, run, reset } = useTxRunner();
+  const { status, run, simulate, reset } = useTxRunner();
 
   const delist = useCallback(
     async (listing: Listing) => {
+      if (config.demoMode) {
+        const { useDemoStore } = await import('../stores/demoStore');
+        return simulate({
+          pendingTitle: 'Delisting NFT…',
+          successTitle: 'NFT delisted',
+          successDescription: 'It has been returned to your wallet.',
+          apply: () => useDemoStore.getState().delistNft(listing.nftMint),
+        });
+      }
       if (!publicKey) return null;
       const ix = await client.delistNftIx(publicKey, new PublicKey(listing.nftMint));
 
@@ -39,7 +49,7 @@ export function useDelistNft() {
         },
       });
     },
-    [client, publicKey, queryClient, run],
+    [client, publicKey, queryClient, run, simulate],
   );
 
   return { delist, status, reset };
