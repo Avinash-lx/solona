@@ -3,6 +3,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { NftImage } from '../../components/NftImage';
 import { FavoriteButton } from '../../components/FavoriteButton';
 import { RarityBadge } from '../../components/RarityBadge';
+import { useTilt } from '../../hooks/useTilt';
 import { formatSol, shortenAddress } from '../../lib/utils';
 import type { EnrichedListing } from '../../types';
 
@@ -13,12 +14,32 @@ interface ListingCardProps {
 
 export function ListingCard({ listing, onBuy }: ListingCardProps) {
   const { publicKey } = useWallet();
+  const tilt = useTilt(9);
   const isOwn = publicKey?.toBase58() === listing.seller;
   const name = listing.metadata?.name ?? 'Loading…';
   const collection = listing.metadata?.collection;
 
   return (
-    <div className="card group flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:ring-1 hover:ring-brand-400/40">
+    <div
+      ref={tilt.ref}
+      onMouseMove={tilt.onMouseMove}
+      onMouseLeave={tilt.onMouseLeave}
+      style={{
+        transform:
+          'perspective(900px) rotateX(var(--rx,0)) rotateY(var(--ry,0)) translateZ(0)',
+        transition: 'transform 0.25s ease-out, box-shadow 0.2s, border-color 0.2s',
+        transformStyle: 'preserve-3d',
+      }}
+      className="card group relative flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-500/20 hover:ring-1 hover:ring-brand-400/50"
+    >
+      {/* Glossy highlight that follows the cursor. */}
+      <div
+        className="pointer-events-none absolute inset-0 z-20 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        style={{
+          background:
+            'radial-gradient(220px circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.18), transparent 60%)',
+        }}
+      />
       <Link
         to={`/nft/${listing.nftMint}`}
         className="relative block overflow-hidden"

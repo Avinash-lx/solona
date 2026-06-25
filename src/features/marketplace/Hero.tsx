@@ -1,4 +1,4 @@
-import { formatSol } from '../../lib/utils';
+import { CountUp } from '../../components/CountUp';
 
 interface HeroProps {
   listingCount: number;
@@ -25,19 +25,25 @@ export function Hero({ listingCount, collectionCount, floorSol }: HeroProps) {
         </p>
 
         <dl className="mt-6 flex flex-wrap gap-x-10 gap-y-3">
-          <Stat label="Active listings" value={String(listingCount)} />
-          <Stat label="Collections" value={String(collectionCount)} />
-          <Stat label="Floor price" value={floorSol != null ? `${formatSol(floorSol)} SOL` : '—'} />
+          <Stat label="Active listings">
+            <CountUp value={listingCount} />
+          </Stat>
+          <Stat label="Collections">
+            <CountUp value={collectionCount} />
+          </Stat>
+          <Stat label="Floor price">
+            {floorSol != null ? <CountUp value={floorSol} decimals={2} suffix=" SOL" /> : '—'}
+          </Stat>
         </dl>
       </div>
     </section>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dd className="text-2xl font-extrabold tabular-nums">{value}</dd>
+      <dd className="text-2xl font-extrabold tabular-nums">{children}</dd>
       <dt className="text-xs font-medium uppercase tracking-wide text-white/70">{label}</dt>
     </div>
   );
