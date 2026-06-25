@@ -5,6 +5,7 @@ import { PublicKey } from '@solana/web3.js';
 import { useMarketplaceClient } from './useMarketplaceClient';
 import { useTxRunner } from './useTxRunner';
 import { config } from '../lib/config';
+import { fireConfetti } from '../lib/confetti';
 import { queryKeys } from '../lib/queryClient';
 import type { Listing } from '../types';
 
@@ -19,12 +20,14 @@ export function usePurchaseNft() {
     async (listing: Listing) => {
       if (config.demoMode) {
         const { useDemoStore } = await import('../stores/demoStore');
-        return simulate({
+        const sig = await simulate({
           pendingTitle: 'Purchasing NFT…',
           successTitle: 'Purchase complete 🎉',
           successDescription: 'The NFT is now in your wallet.',
           apply: () => useDemoStore.getState().buyNft(listing.address),
         });
+        if (sig) fireConfetti();
+        return sig;
       }
       if (!publicKey) return null;
       const ix = await client.purchaseNftIx(
@@ -33,7 +36,7 @@ export function usePurchaseNft() {
         new PublicKey(listing.nftMint),
       );
 
-      return run([ix], {
+      const sig = await run([ix], {
         // Token-program CPI + ATA creation can exceed the default budget.
         computeUnitLimit: 300_000,
         pendingTitle: 'Purchasing NFT…',
@@ -55,6 +58,8 @@ export function usePurchaseNft() {
           });
         },
       });
+      if (sig) fireConfetti();
+      return sig;
     },
     [client, publicKey, queryClient, run, simulate],
   );

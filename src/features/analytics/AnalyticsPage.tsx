@@ -4,6 +4,7 @@ import { useEnrichedListings } from '../../hooks/useEnrichedListings';
 import { useActivityStore } from '../../stores/activityStore';
 import { NftImage } from '../../components/NftImage';
 import { RarityBadge } from '../../components/RarityBadge';
+import { CountUp } from '../../components/CountUp';
 import { EmptyState } from '../../components/ui/states';
 import { formatSol, shortenAddress } from '../../lib/utils';
 import type { EnrichedListing } from '../../types';
@@ -75,10 +76,18 @@ export function AnalyticsPage() {
 
       {/* Headline KPIs */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Kpi label="Active listings" value={String(listings.length)} icon="🛒" />
-        <Kpi label="Collections" value={String(collections.length)} icon="🗂️" />
-        <Kpi label="Floor price" value={`${formatSol(globalFloor)} SOL`} icon="📉" />
-        <Kpi label="Volume (session)" value={`${formatSol(sessionVolume)} SOL`} icon="💸" />
+        <Kpi label="Active listings" icon="🛒">
+          <CountUp value={listings.length} />
+        </Kpi>
+        <Kpi label="Collections" icon="🗂️">
+          <CountUp value={collections.length} />
+        </Kpi>
+        <Kpi label="Floor price" icon="📉">
+          <CountUp value={globalFloor} decimals={2} suffix=" SOL" />
+        </Kpi>
+        <Kpi label="Volume (session)" icon="💸">
+          <CountUp value={sessionVolume} decimals={2} suffix=" SOL" />
+        </Kpi>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -157,13 +166,13 @@ export function AnalyticsPage() {
   );
 }
 
-function Kpi({ label, value, icon }: { label: string; value: string; icon: string }) {
+function Kpi({ label, icon, children }: { label: string; icon: string; children: React.ReactNode }) {
   return (
     <div className="card p-4">
       <div className="mb-1 text-lg" aria-hidden="true">
         {icon}
       </div>
-      <p className="text-xl font-extrabold tabular-nums">{value}</p>
+      <p className="text-xl font-extrabold tabular-nums">{children}</p>
       <p className="text-xs text-zinc-400">{label}</p>
     </div>
   );
