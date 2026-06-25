@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_MARKETPLACE_NAME: string;
   readonly VITE_FEATURE_OFFERS: string;
   readonly VITE_DEMO_MODE: string;
+  readonly VITE_AI_PROXY_URL: string;
 }
 
 interface ImportMeta {

@@ -5,7 +5,9 @@ import { TxStatusTracker } from '../../components/TxStatusTracker';
 import { Spinner } from '../../components/ui/Spinner';
 import { useListNft } from '../../hooks/useListNft';
 import { useMarketplace } from '../../hooks/useMarketplace';
+import { useEnrichedListings } from '../../hooks/useEnrichedListings';
 import { computeFeeBreakdown, solToLamports } from '../../lib/anchor/feeMath';
+import { suggestPrice, type PriceSuggestion } from '../../lib/ai/aiAssist';
 import { formatSol } from '../../lib/utils';
 import type { OwnedNft } from '../../types';
 
@@ -18,14 +20,29 @@ interface ListNftModalProps {
 export function ListNftModal({ nft, onClose }: ListNftModalProps) {
   const { list, status, reset } = useListNft();
   const { data: marketplace } = useMarketplace();
+  const { listings } = useEnrichedListings();
   const [price, setPrice] = useState('');
+  const [suggestion, setSuggestion] = useState<PriceSuggestion | null>(null);
 
   useEffect(() => {
     if (nft) {
       reset();
       setPrice('');
+      setSuggestion(null);
     }
   }, [nft, reset]);
+
+  const handleSuggest = () => {
+    if (!nft) return;
+    const rarity = listings.find((l) => l.nftMint === nft.mint)?.rarityTier;
+    const s = suggestPrice({
+      collection: nft.metadata?.collection ?? null,
+      rarityTier: rarity,
+      listings,
+    });
+    setSuggestion(s);
+    setPrice(String(s.suggestedSol));
+  };
 
   if (!nft) return null;
 
@@ -54,9 +71,19 @@ export function ListNftModal({ nft, onClose }: ListNftModalProps) {
       </div>
 
       <div className="mt-4">
-        <label htmlFor="price" className="mb-1 block text-sm font-medium">
-          Price (SOL)
-        </label>
+        <div className="mb-1 flex items-center justify-between">
+          <label htmlFor="price" className="block text-sm font-medium">
+            Price (SOL)
+          </label>
+          <button
+            type="button"
+            onClick={handleSuggest}
+            disabled={isBusy || done}
+            className="text-xs font-semibold text-brand-400 hover:underline"
+          >
+            ✨ Suggest a price
+          </button>
+        </div>
         <input
           id="price"
           type="number"
@@ -70,6 +97,14 @@ export function ListNftModal({ nft, onClose }: ListNftModalProps) {
           disabled={isBusy || done}
           autoFocus
         />
+        {suggestion && (
+          <div className="mt-2 rounded-lg bg-brand-400/10 p-2 text-xs text-brand-600 dark:text-brand-300">
+            <span className="font-semibold">
+              AI suggests ~{formatSol(suggestion.suggestedSol)} SOL
+            </span>{' '}
+            (range {formatSol(suggestion.lowSol)}–{formatSol(suggestion.highSol)}). {suggestion.reasoning}
+          </div>
+        )}
       </div>
 
       {breakdown && (

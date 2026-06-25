@@ -8,6 +8,7 @@ import { cn } from '../../lib/utils';
 const NAV = [
   { to: '/', label: 'Browse', end: true },
   { to: '/mint', label: 'Create' },
+  { to: '/analytics', label: 'Stats' },
   { to: '/portfolio', label: 'Portfolio' },
   { to: '/favorites', label: 'Favorites' },
 ];

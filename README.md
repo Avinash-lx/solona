@@ -135,7 +135,14 @@ The platform supports the full NFT lifecycle on Devnet:
 - **Wallet**: multi-wallet connect modal, address + live SOL balance, Devnet
   mismatch banner.
 - **Mint / Create**: Metaplex 1/1 NFT minting with image/metadata upload (Irys)
-  or a direct metadata URI.
+  or a direct metadata URI, plus **✨ AI name & description generation**.
+- **AI-assist**: generate NFT names/descriptions on mint and **fair-price
+  suggestions** when listing (local heuristic by default; set `VITE_AI_PROXY_URL`
+  to a serverless Claude proxy for real-model output, key stays server-side).
+- **Analytics** (`/analytics`, "Stats"): KPI cards, a collection leaderboard
+  (floor / avg / top / listed), a recent-sales feed, and a rarity leaderboard.
+- **Pro trading**: **Sweep the floor** — buy the N cheapest listings in one
+  action (filter to a collection first to sweep just that one).
 - **Browse**: live grid of active listings with image, name, collection, price,
   seller; lazy images + skeletons.
 - **Search & filter**: by name/collection/price range, sort (price ↑/↓, recent,
@@ -206,15 +213,26 @@ asset caching):
 Build-time `VITE_*` values are passed as Docker build args / compose env (see
 `docker-compose.yml`). `deploy.sh build` just produces `./dist`.
 
-## Roadmap — Offers / bids (NOT implemented on-chain)
+## Offers / bids
 
-Offers/bids are scaffolded behind the `VITE_FEATURE_OFFERS` flag
-(`src/features/offers/OffersPanel.tsx`) and rendered **non-functionally**.
-Accepting escrowed offers requires a **new on-chain instruction** (e.g.
-`makeOffer` / `acceptOffer` with an offer-escrow PDA) that the current program
-does not expose. We deliberately **do not fake on-chain behavior** — the panel is
-a clearly-marked preview only. Enabling the flag shows the planned UX; wiring it
-up is a future program upgrade.
+Offers are **fully interactive in demo mode** (`src/features/offers/OffersPanel.tsx`,
+`src/stores/offersStore.ts`): make a bid on any NFT, and accept/decline incoming
+bids on your own listings (seeded with a couple of demo offers). In **live**
+mode they're shown as a clearly-marked, non-functional preview behind
+`VITE_FEATURE_OFFERS`, because escrowed offers need a **new on-chain instruction**
+(`make_offer` / `accept_offer` with an offer-escrow PDA) that the current program
+doesn't expose — we never fake on-chain behavior. That instruction is the next
+program upgrade.
+
+## On-chain program (real Devnet trading)
+
+The Anchor program source lives in [`anchor/`](./anchor) — `initialize`, `list`,
+`purchase`, `delist`, `update_fee`, matching the frontend's PDA seeds and account
+layout. Build + deploy it (`anchor build && anchor deploy`), export the IDL, set
+`VITE_DEMO_MODE=false`, and mint/list/buy/sell become real Devnet transactions.
+Full instructions in [`anchor/README.md`](./anchor/README.md). The frontend
+decoder tolerates both the bundled (camelCase) and anchor-generated (snake_case)
+IDL field names, so swapping in the deployed IDL needs no client changes.
 
 ## Project structure
 

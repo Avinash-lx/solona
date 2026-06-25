@@ -15,6 +15,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.vite
 
 # Env files (never commit secrets)
 .env
@@ -37,3 +38,9 @@ coverage
 
 # TS build info
 *.tsbuildinfo
+
+# Anchor / Rust build artifacts
+anchor/target
+anchor/.anchor
+anchor/node_modules
+**/*.rs.bk
