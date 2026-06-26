@@ -33,10 +33,21 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(4px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        blob: {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '33%': { transform: 'translate(6%, -8%) scale(1.12)' },
+          '66%': { transform: 'translate(-7%, 6%) scale(0.92)' },
+        },
+        marquee: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         shimmer: 'shimmer 1.5s infinite',
         'fade-in': 'fade-in 0.2s ease-out',
+        blob: 'blob 18s ease-in-out infinite',
+        marquee: 'marquee 30s linear infinite',
       },
     },
   },

@@ -16,6 +16,7 @@ import {
 import { config } from '../lib/config';
 import { mapTxError } from '../lib/solana/errors';
 import { notify } from '../lib/notifications';
+import { fireConfetti } from '../lib/confetti';
 import { explorerUrl } from '../lib/config';
 import { queryKeys } from '../lib/queryClient';
 
@@ -81,6 +82,7 @@ export function useMintNft() {
           title: 'NFT minted 🎉',
           description: `${input.name} is now in your wallet. List it from your Portfolio.`,
         });
+        fireConfetti();
         return mintAddress;
       }
 
@@ -166,6 +168,7 @@ export function useMintNft() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.ownedNfts(wallet.publicKey.toBase58()),
         });
+        fireConfetti();
         return mintAddress;
       } catch (err) {
         const friendly = mapTxError(err);

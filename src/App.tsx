@@ -1,7 +1,9 @@
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Header } from './components/layout/Header';
 import { NetworkBanner } from './components/layout/NetworkBanner';
 import { DemoBanner } from './components/layout/DemoBanner';
+import { Ticker } from './components/layout/Ticker';
+import { Aurora } from './components/Aurora';
 import { ToastViewport } from './components/toast/ToastViewport';
 import { Footer } from './components/layout/Footer';
 import { MarketplacePage } from './features/marketplace/MarketplacePage';
@@ -17,14 +19,21 @@ export function App() {
   // Single mount of the real-time engine: account + log subscriptions that keep
   // the whole app live without any backend or polling.
   useRealtimeSync();
+  const location = useLocation();
 
   return (
     <div className="flex min-h-screen flex-col">
+      <Aurora />
       <DemoBanner />
       <NetworkBanner />
       <Header />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
-        <Routes>
+      <Ticker />
+      {/* `key` on the location restarts the fade-in animation on every route change. */}
+      <main
+        key={location.pathname}
+        className="mx-auto w-full max-w-7xl flex-1 animate-fade-in px-4 py-6 motion-reduce:animate-none"
+      >
+        <Routes location={location}>
           <Route path="/" element={<MarketplacePage />} />
           <Route path="/mint" element={<MintPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
