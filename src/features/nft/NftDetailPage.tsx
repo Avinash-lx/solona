@@ -3,9 +3,11 @@ import { Link, useParams } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useNftMetadata } from '../../hooks/useNftMetadata';
 import { useEnrichedListings } from '../../hooks/useEnrichedListings';
+import { useNftOwner } from '../../hooks/useNftOwner';
 import { usePriceHistoryStore } from '../../stores/priceHistoryStore';
 import { NftImage } from '../../components/NftImage';
 import { FavoriteButton } from '../../components/FavoriteButton';
+import { OwnerBadge } from '../../components/OwnerBadge';
 import { RarityBadge } from '../../components/RarityBadge';
 import { PriceSparkline } from '../../components/PriceSparkline';
 import { LoadingState } from '../../components/ui/states';
@@ -28,6 +30,7 @@ export function NftDetailPage() {
 
   const listing = useMemo(() => listings.find((l) => l.nftMint === mint) ?? null, [listings, mint]);
   const isOwnListing = listing?.seller === publicKey?.toBase58();
+  const ownership = useNftOwner(isValidPublicKey(mint) ? mint : null);
 
   if (!isValidPublicKey(mint)) {
     return (
@@ -91,6 +94,9 @@ export function NftDetailPage() {
         {metadata?.description && (
           <p className="text-sm text-zinc-600 dark:text-zinc-300">{metadata.description}</p>
         )}
+
+        {/* Ownership — the core of an NFT: who holds it right now. */}
+        <OwnerBadge ownership={ownership} listed={Boolean(listing)} />
 
         <div className="card p-5">
           {listing ? (
