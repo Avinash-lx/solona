@@ -56,6 +56,8 @@ export function usePurchaseNft() {
           queryClient.invalidateQueries({
             queryKey: queryKeys.ownedNfts(publicKey.toBase58()),
           });
+          // Refresh the on-chain owner so the new holder shows immediately.
+          queryClient.invalidateQueries({ queryKey: ['owner', listing.nftMint] });
         },
       });
       if (sig) fireConfetti();
