@@ -1,10 +1,18 @@
-# Solana NFT Marketplace (Devnet) — frontend-only dApp
+# 🟣🟢 Solana NFT Market — *Own the moment, on-chain.*
 
-A production-quality NFT marketplace trading UI for Solana **Devnet**. There is
-**no traditional backend**: every piece of state comes from on-chain accounts,
-read directly over RPC and kept live via Solana account-change WebSocket
-subscriptions. Local-only features (favorites, collections, alerts, theme) are
-persisted in the browser (IndexedDB / localStorage).
+> **Mint it. Own it. Trade it. On Solana — in real time.**
+
+A production-quality NFT marketplace where **the chain is the backend**. Mint a
+1/1, list it into **trustless escrow**, buy with a tap, and watch **ownership**
+transfer for real — every move settled on Solana, nothing hidden behind a
+server. State comes straight from on-chain accounts and updates **the instant it
+happens** via WebSocket account subscriptions. No backend. No middleman. Just
+you, your wallet, and the chain.
+
+✨ AI names + prices your NFTs · 📊 live floor/volume/rarity analytics · ⚡
+sweep-the-floor + offers · 👑 real on-chain ownership · 🎉 confetti on mint.
+
+**Devnet is live. Mainnet is loading.**
 
 > Program ID: `6MAZYi6WaiB8ztJuJjoAVkbQDxZxfuQuJR3KfrfZncih`
 

@@ -76,7 +76,7 @@ describe('App renders end-to-end (no crash / blank screen)', () => {
 
   it('renders the marketplace landing without throwing', () => {
     renderApp('/');
-    expect(screen.getByText(/Discover, collect, and trade NFTs/i)).toBeInTheDocument();
+    expect(screen.getByText(/Own the moment/i)).toBeInTheDocument();
     // Subscriptions wired up at mount.
     expect(fakeConnection.onProgramAccountChange).toHaveBeenCalled();
   });
