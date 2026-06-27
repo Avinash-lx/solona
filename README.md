@@ -1,10 +1,18 @@
-# Solana NFT Marketplace (Devnet) — frontend-only dApp
+# 🟣🟢 Solana NFT Market — *Own the moment, on-chain.*
 
-A production-quality NFT marketplace trading UI for Solana **Devnet**. There is
-**no traditional backend**: every piece of state comes from on-chain accounts,
-read directly over RPC and kept live via Solana account-change WebSocket
-subscriptions. Local-only features (favorites, collections, alerts, theme) are
-persisted in the browser (IndexedDB / localStorage).
+> **Mint it. Own it. Trade it. On Solana — in real time.**
+
+A production-quality NFT marketplace where **the chain is the backend**. Mint a
+1/1, list it into **trustless escrow**, buy with a tap, and watch **ownership**
+transfer for real — every move settled on Solana, nothing hidden behind a
+server. State comes straight from on-chain accounts and updates **the instant it
+happens** via WebSocket account subscriptions. No backend. No middleman. Just
+you, your wallet, and the chain.
+
+✨ AI names + prices your NFTs · 📊 live floor/volume/rarity analytics · ⚡
+sweep-the-floor + offers · 👑 real on-chain ownership · 🎉 confetti on mint.
+
+**Devnet is live. Mainnet is loading.**
 
 > Program ID: `6MAZYi6WaiB8ztJuJjoAVkbQDxZxfuQuJR3KfrfZncih`
 
@@ -30,27 +38,21 @@ npm install
 npm run dev               # http://localhost:5173, talking to Devnet
 ```
 
-### Interactive demo mode (on by default)
+### Real (on-chain) mode is the default
 
-A live Devnet marketplace needs an initialized program + real listings before
-anything shows. So **demo mode is ON by default** — and it's fully interactive:
-you can **mint → list → buy → delist** entirely client-side, with no wallet, no
-RPC, and no deployed program. Sample NFTs use offline SVG art; a banner makes it
-clear the data is seeded, and nothing ever touches the chain.
+The app runs against **real Solana Devnet** out of the box (`VITE_DEMO_MODE=false`).
+Minting creates real NFTs via Metaplex; listing/buying/selling and **ownership**
+are real on-chain transactions — but list/buy/sell require the **marketplace
+program to be deployed + initialized** first (see [`anchor/`](./anchor) and Admin
+setup). Until it's deployed, the marketplace will be empty (minting still works).
 
-```bash
-npm run dev               # demo mode is on unless you disable it
-```
-
-To run against **live Devnet** on-chain data instead:
+Optional offline sandbox (no wallet / RPC / deployed program) for trying the
+full UX — fully simulated, nothing touches the chain:
 
 ```bash
-echo "VITE_DEMO_MODE=false" >> .env
+echo "VITE_DEMO_MODE=true" >> .env
 npm run dev
 ```
-
-In live mode, mint/list/buy/sell use the real Metaplex + marketplace program
-(the latter must be deployed + initialized — see Admin setup).
 
 Other scripts:
 

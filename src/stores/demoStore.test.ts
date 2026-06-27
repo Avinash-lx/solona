@@ -1,14 +1,32 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useDemoStore } from './demoStore';
-import { DEMO_LISTINGS, DEMO_OWNED } from '../lib/demo/demoData';
+import { DEMO_LISTINGS, DEMO_OWNED, DEMO_WALLET } from '../lib/demo/demoData';
 
 describe('demoStore (interactive mint→list→buy→delist)', () => {
   beforeEach(() => {
+    const owners: Record<string, string> = {};
+    for (const n of DEMO_OWNED) owners[n.mint] = DEMO_WALLET;
+    for (const l of DEMO_LISTINGS) owners[l.nftMint] = l.seller;
     useDemoStore.setState({
       listings: [...DEMO_LISTINGS],
       owned: DEMO_OWNED.map((n) => ({ ...n })),
       metadata: { ...useDemoStore.getState().metadata },
+      owners,
     });
+  });
+
+  it('transfers ownership from seller to buyer on purchase', () => {
+    const target = useDemoStore.getState().listings[0];
+    // Seller owns it while listed.
+    expect(useDemoStore.getState().ownerOf(target.nftMint)).toBe(target.seller);
+    useDemoStore.getState().buyNft(target.address);
+    // Buyer (demo user) owns it after purchase.
+    expect(useDemoStore.getState().ownerOf(target.nftMint)).toBe(DEMO_WALLET);
+  });
+
+  it('a minted NFT is owned by the minter', () => {
+    const mint = useDemoStore.getState().mintNft({ name: 'Owned', attributes: [] });
+    expect(useDemoStore.getState().ownerOf(mint)).toBe(DEMO_WALLET);
   });
 
   it('mints a new NFT into the owned set with resolvable metadata', () => {

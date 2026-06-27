@@ -25,14 +25,18 @@ interface DemoState {
   owned: OwnedNft[];
   /** Live metadata map (seed + freshly minted). */
   metadata: Record<string, NftMetadata>;
+  /** Current owner address per mint — the source of truth for ownership. */
+  owners: Record<string, string>;
 
   mintNft: (args: MintArgs) => string;
   listNft: (mint: string, priceSol: number) => void;
   buyNft: (listingAddress: string) => void;
   delistNft: (mint: string) => void;
-  /** Listing sold to an external buyer (e.g. an accepted offer): just removed. */
-  sellListing: (mint: string, priceSol: number) => void;
+  /** Listing sold to an external buyer (e.g. an accepted offer). */
+  sellListing: (mint: string, priceSol: number, newOwner: string) => void;
   getMetadata: (mint: string) => NftMetadata | null;
+  /** The current owner of a mint (falls back to a listing's seller). */
+  ownerOf: (mint: string) => string | null;
 }
 
 function pushActivity(
@@ -55,18 +59,30 @@ function pushActivity(
  * deployed program — so the entire UX is demonstrable. Real (non-demo) mode
  * uses the on-chain hooks instead.
  */
+/** Seed the ownership map: held NFTs belong to the user; listed ones to their seller. */
+function seedOwners(): Record<string, string> {
+  const owners: Record<string, string> = {};
+  for (const n of DEMO_OWNED) owners[n.mint] = DEMO_WALLET;
+  for (const l of DEMO_LISTINGS) owners[l.nftMint] = l.seller;
+  return owners;
+}
+
 export const useDemoStore = create<DemoState>((set, get) => ({
   listings: [...DEMO_LISTINGS],
   owned: DEMO_OWNED.map((n) => ({ ...n })),
   metadata: { ...DEMO_METADATA },
+  owners: seedOwners(),
 
   getMetadata: (mint) => get().metadata[mint] ?? null,
+  ownerOf: (mint) =>
+    get().owners[mint] ?? get().listings.find((l) => l.nftMint === mint)?.seller ?? null,
 
   mintNft: ({ name, symbol, description, image, attributes }) => {
     const mint = genDemoMint();
     const metadata = makeDemoMetadata({ mint, name, symbol, description, image, attributes });
     set((s) => ({
       metadata: { ...s.metadata, [mint]: metadata },
+      owners: { ...s.owners, [mint]: DEMO_WALLET },
       owned: [
         { mint, tokenAccount: `demo-ata-${mint.slice(0, 6)}`, amount: 1, metadata },
         ...s.owned,
@@ -102,7 +118,8 @@ export const useDemoStore = create<DemoState>((set, get) => ({
     const meta = get().metadata[listing.nftMint];
     set((s) => ({
       listings: s.listings.filter((l) => l.address !== listingAddress),
-      // The buyer (demo user) now owns it.
+      // Ownership transfers from the seller to the buyer (the demo user).
+      owners: { ...s.owners, [listing.nftMint]: DEMO_WALLET },
       owned: [
         {
           mint: listing.nftMint,
@@ -130,9 +147,13 @@ export const useDemoStore = create<DemoState>((set, get) => ({
     pushActivity('delist', { mint, priceSol: listing.priceSol });
   },
 
-  sellListing: (mint, priceSol) => {
+  sellListing: (mint, priceSol, newOwner) => {
     if (!get().listings.some((l) => l.nftMint === mint)) return;
-    set((s) => ({ listings: s.listings.filter((l) => l.nftMint !== mint) }));
+    set((s) => ({
+      listings: s.listings.filter((l) => l.nftMint !== mint),
+      // Ownership transfers to the accepted bidder.
+      owners: { ...s.owners, [mint]: newOwner },
+    }));
     pushActivity('sale', { mint, priceSol });
   },
 }));

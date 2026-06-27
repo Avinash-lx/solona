@@ -62,8 +62,9 @@ export const useOffersStore = create<OffersState>((set, get) => ({
   acceptOffer: (id) => {
     const offer = get().offers.find((o) => o.id === id);
     if (!offer) return;
-    // The NFT is sold to the bidder: remove the listing + clear offers for it.
-    useDemoStore.getState().sellListing(offer.mint, offer.priceSol);
+    // The NFT is sold to the bidder: transfer ownership, remove the listing,
+    // and clear that mint's offers.
+    useDemoStore.getState().sellListing(offer.mint, offer.priceSol, offer.bidder);
     set((s) => ({ offers: s.offers.filter((o) => o.mint !== offer.mint) }));
     notify({
       variant: 'success',
