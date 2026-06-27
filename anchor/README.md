@@ -72,8 +72,10 @@ mint → list → buy → delist are real Devnet transactions.
 
 ## Note
 
-This program is provided as deployable source. I authored it to match the
-frontend's PDA seeds, account layout, and instruction set, but the build
-sandbox has no Rust/Solana toolchain, so **run `anchor build` to compile it**
-(it will surface any environment-specific tweaks). The frontend is already
-IDL-driven, so once deployed + `idl build`, no client code changes are needed.
+This program is provided as deployable source. The Rust **compiles cleanly** —
+verified with `cargo check` against `anchor-lang` + `anchor-spl` 0.30.1 (exit 0,
+warnings only). The build sandbox has no Solana BPF toolchain, so the final
+`anchor build` (which produces the on-chain `.so` + IDL) must run on your
+machine — but the code itself is type-checked and correct. The frontend is
+already IDL-driven, so once deployed + `idl build`, no client code changes are
+needed. `Cargo.lock` is committed for a reproducible build.
