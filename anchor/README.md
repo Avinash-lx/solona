@@ -2,7 +2,7 @@
 
 The Solana program behind the marketplace: escrow-based **list / purchase /
 delist**, an admin-configurable fee, and a one-time **initialize**. Deploy this
-to Devnet and the frontend (set `VITE_DEMO_MODE=false`) trades for real.
+to Devnet and the frontend trades for real.
 
 > Program ID: `6MAZYi6WaiB8ztJuJjoAVkbQDxZxfuQuJR3KfrfZncih`
 
@@ -63,7 +63,6 @@ In the repo root `.env`:
 ```bash
 VITE_PROGRAM_ID=<your deployed program id>   # if you changed it
 VITE_MARKETPLACE_NAME=devnet-marketplace     # must match the name you initialize with
-VITE_DEMO_MODE=false                         # use real on-chain data
 ```
 
 Then run the app, open **/admin** with the authority wallet, and **Initialize**

@@ -6,7 +6,7 @@ import { NftImage } from '../../components/NftImage';
 import { Spinner } from '../../components/ui/Spinner';
 import { generateNftIdea } from '../../lib/ai/aiAssist';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { config, explorerUrl } from '../../lib/config';
+import { explorerUrl } from '../../lib/config';
 import { shortenAddress } from '../../lib/utils';
 
 interface Attr {
@@ -108,8 +108,7 @@ function MintInner() {
           {walletAddress && (
             <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">
               ✓ Recorded in your wallet{' '}
-              <span className="font-mono">{shortenAddress(walletAddress, 5)}</span>
-              {config.demoMode ? ' (demo)' : ' on Solana Devnet'}
+              <span className="font-mono">{shortenAddress(walletAddress, 5)}</span> on Solana Devnet
             </p>
           )}
         </div>
@@ -141,8 +140,8 @@ function MintInner() {
           <span aria-hidden="true">🔗</span>
           <span>
             Minting to your connected wallet{' '}
-            <span className="font-mono font-semibold">{shortenAddress(walletAddress, 5)}</span>
-            {config.demoMode ? ' (demo — simulated, nothing recorded on-chain)' : ' — the NFT will be recorded here on-chain.'}
+            <span className="font-mono font-semibold">{shortenAddress(walletAddress, 5)}</span>{' '}
+            — the NFT will be recorded here on-chain.
           </span>
         </div>
       ) : (

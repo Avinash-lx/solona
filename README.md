@@ -38,21 +38,14 @@ npm install
 npm run dev               # http://localhost:5173, talking to Devnet
 ```
 
-### Real (on-chain) mode is the default
+### Everything is real on-chain
 
-The app runs against **real Solana Devnet** out of the box (`VITE_DEMO_MODE=false`).
-Minting creates real NFTs via Metaplex; listing/buying/selling and **ownership**
-are real on-chain transactions — but list/buy/sell require the **marketplace
-program to be deployed + initialized** first (see [`anchor/`](./anchor) and Admin
-setup). Until it's deployed, the marketplace will be empty (minting still works).
-
-Optional offline sandbox (no wallet / RPC / deployed program) for trying the
-full UX — fully simulated, nothing touches the chain:
-
-```bash
-echo "VITE_DEMO_MODE=true" >> .env
-npm run dev
-```
+The app runs **only** against real Solana Devnet — there is no demo/simulated
+mode. Minting creates real NFTs via Metaplex (works immediately, and the NFT
+lands in your connected wallet); listing / buying / selling and **ownership** are
+real on-chain transactions that require the **marketplace program to be deployed
++ initialized** first (see [`anchor/`](./anchor) and Admin setup). Until the
+program is deployed, the marketplace grid is empty — minting still works.
 
 Other scripts:
 
@@ -129,8 +122,8 @@ The platform supports the full NFT lifecycle on Devnet:
    *My Active Listings* to pull it back out of escrow.
 
 > Steps 2–4 require the marketplace program to be deployed and initialized
-> (`/admin` → Initialize, once). Step 1 works on its own. If you just want to see
-> the UI populated without any of this, use **demo mode** (above).
+> (`/admin` → Initialize, once). Step 1 (minting) works on its own — the NFT
+> lands in your connected wallet immediately.
 
 ## Features
 
@@ -215,23 +208,20 @@ asset caching):
 Build-time `VITE_*` values are passed as Docker build args / compose env (see
 `docker-compose.yml`). `deploy.sh build` just produces `./dist`.
 
-## Offers / bids
+## Offers / bids (roadmap)
 
-Offers are **fully interactive in demo mode** (`src/features/offers/OffersPanel.tsx`,
-`src/stores/offersStore.ts`): make a bid on any NFT, and accept/decline incoming
-bids on your own listings (seeded with a couple of demo offers). In **live**
-mode they're shown as a clearly-marked, non-functional preview behind
-`VITE_FEATURE_OFFERS`, because escrowed offers need a **new on-chain instruction**
-(`make_offer` / `accept_offer` with an offer-escrow PDA) that the current program
-doesn't expose — we never fake on-chain behavior. That instruction is the next
-program upgrade.
+Offers are scaffolded behind `VITE_FEATURE_OFFERS` (off by default) as a
+clearly-marked, **non-functional** preview (`src/features/offers/OffersPanel.tsx`).
+Escrowed offers need a **new on-chain instruction** (`make_offer` /
+`accept_offer` with an offer-escrow PDA) that the current program doesn't expose
+— we never fake on-chain behavior. That instruction is the next program upgrade.
 
 ## On-chain program (real Devnet trading)
 
 The Anchor program source lives in [`anchor/`](./anchor) — `initialize`, `list`,
 `purchase`, `delist`, `update_fee`, matching the frontend's PDA seeds and account
-layout. Build + deploy it (`anchor build && anchor deploy`), export the IDL, set
-`VITE_DEMO_MODE=false`, and mint/list/buy/sell become real Devnet transactions.
+layout. Build + deploy it (`anchor build && anchor deploy`), export the IDL, and
+mint/list/buy/sell become real Devnet transactions.
 Full instructions in [`anchor/README.md`](./anchor/README.md). The frontend
 decoder tolerates both the bundled (camelCase) and anchor-generated (snake_case)
 IDL field names, so swapping in the deployed IDL needs no client changes.

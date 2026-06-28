@@ -7,16 +7,6 @@ import { notify } from '../lib/notifications';
 import { explorerUrl } from '../lib/config';
 import type { TxStatus } from '../types';
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-export interface SimulateOptions {
-  pendingTitle: string;
-  successTitle: string;
-  successDescription?: string;
-  /** Mutates the demo store; runs at the "confirmed" step. */
-  apply: () => void;
-}
-
 export interface RunOptions {
   /** Toast title shown while the tx is in flight. */
   pendingTitle: string;
@@ -92,29 +82,5 @@ export function useTxRunner() {
     [connection, wallet],
   );
 
-  /**
-   * Demo-mode counterpart to `run`: plays the same staged tx lifecycle
-   * (building → sent → confirmed → finalized) with no wallet or chain, applying
-   * the effect to the demo store at the confirmed step.
-   */
-  const simulate = useCallback(async (options: SimulateOptions): Promise<string> => {
-    notify({ variant: 'pending', title: options.pendingTitle, duration: 1500 });
-    setStatus({ stage: 'building' });
-    const signature = 'DemoTx' + Math.random().toString(36).slice(2).padEnd(20, '0');
-    await delay(250);
-    setStatus({ stage: 'sent', signature });
-    await delay(450);
-    options.apply();
-    setStatus({ stage: 'confirmed', signature });
-    notify({
-      variant: 'success',
-      title: options.successTitle,
-      description: options.successDescription,
-    });
-    await delay(300);
-    setStatus({ stage: 'finalized', signature });
-    return signature;
-  }, []);
-
-  return { status, run, simulate, reset };
+  return { status, run, reset };
 }
