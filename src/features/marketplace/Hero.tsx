@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { CountUp } from '../../components/CountUp';
 
 interface HeroProps {
