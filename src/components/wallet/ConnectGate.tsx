@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { EmptyState } from '../ui/states';
-import { config } from '../../lib/config';
 
 /** Renders children only when a wallet is connected, else a connect prompt. */
 export function ConnectGate({
@@ -13,8 +12,7 @@ export function ConnectGate({
   message?: string;
 }) {
   const { connected } = useWallet();
-  // Demo mode needs no real wallet — everything is simulated client-side.
-  if (!connected && !config.demoMode) {
+  if (!connected) {
     return (
       <EmptyState
         title="Wallet not connected"

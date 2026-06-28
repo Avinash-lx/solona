@@ -20,7 +20,6 @@ export function useMarketplace() {
 
   const query = useQuery<Marketplace | null>({
     queryKey: queryKeys.marketplace,
-    enabled: !config.demoMode,
     queryFn: async () => {
       const info = await connection.getAccountInfo(marketplacePda, 'confirmed');
       if (!info) return null;
@@ -29,7 +28,6 @@ export function useMarketplace() {
   });
 
   useEffect(() => {
-    if (config.demoMode) return;
     const id = subscribeAccount(connection, marketplacePda, (info) => {
       if (!info) {
         queryClient.setQueryData(queryKeys.marketplace, null);
@@ -46,18 +44,6 @@ export function useMarketplace() {
     });
     return () => removeSubscription(connection, id);
   }, [connection, marketplacePda, queryClient]);
-
-  if (config.demoMode) {
-    const demoMarketplace: Marketplace = {
-      address: marketplacePda.toBase58(),
-      authority: '11111111111111111111111111111111',
-      treasury: '11111111111111111111111111111111',
-      feeBps: 200,
-      name: config.marketplaceName,
-      listingsCount: 0,
-    };
-    return { ...query, data: demoMarketplace } as typeof query;
-  }
 
   return query;
 }
