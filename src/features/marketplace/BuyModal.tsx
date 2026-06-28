@@ -7,7 +7,6 @@ import { usePurchaseNft } from '../../hooks/usePurchaseNft';
 import { useMarketplace } from '../../hooks/useMarketplace';
 import { useBalance } from '../../hooks/useWalletInfo';
 import { computeFeeBreakdown } from '../../lib/anchor/feeMath';
-import { config } from '../../lib/config';
 import { formatSol } from '../../lib/utils';
 import type { EnrichedListing } from '../../types';
 
@@ -31,8 +30,7 @@ export function BuyModal({ listing, onClose }: BuyModalProps) {
   const feeBps = marketplace?.feeBps ?? 0;
   const breakdown = computeFeeBreakdown(listing.priceLamports, feeBps);
   const isBusy = status.stage !== 'idle' && status.stage !== 'error';
-  // In demo mode there's no real balance to check.
-  const insufficient = !config.demoMode && (balance?.sol ?? 0) < breakdown.totalSol;
+  const insufficient = (balance?.sol ?? 0) < breakdown.totalSol;
   const done = status.stage === 'confirmed' || status.stage === 'finalized';
 
   return (

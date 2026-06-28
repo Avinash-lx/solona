@@ -9,9 +9,6 @@ import { EmptyState } from '../../components/ui/states';
 import { ConnectGate } from '../../components/wallet/ConnectGate';
 import { ListNftModal } from './ListNftModal';
 import { DelistButton } from './DelistButton';
-import { useOffersStore } from '../../stores/offersStore';
-import { DEMO_WALLET } from '../../lib/demo/demoData';
-import { config } from '../../lib/config';
 import { toCsv, downloadCsv } from '../../lib/csv';
 import { formatSol, shortenAddress } from '../../lib/utils';
 import { Link } from 'react-router-dom';
@@ -26,10 +23,8 @@ export function PortfolioPage() {
 
   const owned = useOwnedNfts();
   const { listings } = useEnrichedListings();
-  const offers = useOffersStore((s) => s.offers);
 
-  // In demo mode the "current user" is the demo wallet (no real key connected).
-  const me = config.demoMode ? DEMO_WALLET : publicKey?.toBase58();
+  const me = publicKey?.toBase58();
   const myListings = useMemo(
     () => listings.filter((l) => l.seller === me),
     [listings, me],
@@ -155,14 +150,6 @@ export function PortfolioPage() {
                     {l.metadata?.name ?? shortenAddress(l.nftMint)}
                   </p>
                   <p className="text-sm font-bold">{formatSol(l.priceSol)} SOL</p>
-                  {offers.filter((o) => o.mint === l.nftMint).length > 0 && (
-                    <Link
-                      to={`/nft/${l.nftMint}`}
-                      className="mt-1 inline-block text-xs font-semibold text-brand-400 hover:underline"
-                    >
-                      💰 {offers.filter((o) => o.mint === l.nftMint).length} offer(s) — review
-                    </Link>
-                  )}
                   <div className="mt-3">
                     <DelistButton listing={l} />
                   </div>

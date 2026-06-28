@@ -4,32 +4,19 @@ import { PublicKey } from '@solana/web3.js';
 import { config } from '../lib/config';
 import { LISTING_DISCRIMINATOR, decodeListing } from '../lib/anchor/decoders';
 import { bs58Encode } from '../lib/solana/encoding';
-import { useDemoStore } from '../stores/demoStore';
 import { queryKeys } from '../lib/queryClient';
 import type { Listing } from '../types';
 
-export interface ListingsResult {
-  data: Listing[] | undefined;
-  isLoading: boolean;
-  isError: boolean;
-  error: unknown;
-  refetch: () => void;
-}
-
 /**
- * Active listings. In demo mode they come from the live client-side demo store
- * (instant updates as you mint/list/buy); otherwise they're fetched from the
- * program's `Listing` accounts via getProgramAccounts (kept fresh by
- * useRealtimeSync — no polling).
+ * Fetches all active on-chain `Listing` accounts via getProgramAccounts,
+ * filtered server-side by the account discriminator. Kept fresh by
+ * useRealtimeSync (WebSocket) — no polling.
  */
-export function useListings(): ListingsResult {
+export function useListings() {
   const { connection } = useConnection();
-  // Subscribe to the demo store so demo mutations re-render the grid.
-  const demoListings = useDemoStore((s) => s.listings);
 
-  const query = useQuery<Listing[]>({
+  return useQuery<Listing[]>({
     queryKey: queryKeys.listings,
-    enabled: !config.demoMode,
     queryFn: async () => {
       const accounts = await connection.getProgramAccounts(config.programId, {
         commitment: 'confirmed',
@@ -46,17 +33,6 @@ export function useListings(): ListingsResult {
       return listings;
     },
   });
-
-  if (config.demoMode) {
-    return { data: demoListings, isLoading: false, isError: false, error: null, refetch: () => {} };
-  }
-  return {
-    data: query.data,
-    isLoading: query.isLoading,
-    isError: query.isError,
-    error: query.error,
-    refetch: query.refetch,
-  };
 }
 
 /** Find a single listing in the cached set by mint (cheap, no extra RPC). */

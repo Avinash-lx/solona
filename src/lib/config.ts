@@ -28,14 +28,6 @@ export const config = {
   features: {
     offers: import.meta.env.VITE_FEATURE_OFFERS === 'true',
   },
-  /**
-   * Demo mode seeds the read models with self-contained sample data. It is OFF
-   * by default — the app runs against REAL on-chain Devnet data (mint, list,
-   * buy, sell are real transactions). Set `VITE_DEMO_MODE=true` only if you want
-   * the offline simulated sandbox. Real mode requires the marketplace program to
-   * be deployed + initialized (see anchor/README.md); minting works regardless.
-   */
-  demoMode: import.meta.env.VITE_DEMO_MODE === 'true',
   ai: {
     /**
      * Optional URL of a serverless endpoint that proxies to Claude (keeps the
