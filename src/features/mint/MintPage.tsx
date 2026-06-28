@@ -5,7 +5,8 @@ import { ConnectGate } from '../../components/wallet/ConnectGate';
 import { NftImage } from '../../components/NftImage';
 import { Spinner } from '../../components/ui/Spinner';
 import { generateNftIdea } from '../../lib/ai/aiAssist';
-import { explorerUrl } from '../../lib/config';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { config, explorerUrl } from '../../lib/config';
 import { shortenAddress } from '../../lib/utils';
 
 interface Attr {
@@ -32,6 +33,8 @@ export function MintPage() {
 
 function MintInner() {
   const { mint, status, reset } = useMintNft();
+  const { publicKey } = useWallet();
+  const walletAddress = publicKey?.toBase58() ?? null;
 
   const [name, setName] = useState('');
   const [symbol, setSymbol] = useState('');
@@ -102,6 +105,13 @@ function MintInner() {
           >
             {status.mintAddress ? shortenAddress(status.mintAddress, 6) : ''} ↗
           </a>
+          {walletAddress && (
+            <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">
+              ✓ Recorded in your wallet{' '}
+              <span className="font-mono">{shortenAddress(walletAddress, 5)}</span>
+              {config.demoMode ? ' (demo)' : ' on Solana Devnet'}
+            </p>
+          )}
         </div>
         <div className="flex justify-center gap-2">
           <Link to="/portfolio" className="btn-primary">
@@ -124,6 +134,22 @@ function MintInner() {
           list it from your Portfolio.
         </p>
       </div>
+
+      {/* Make the on-chain destination explicit: the NFT records into THIS wallet. */}
+      {walletAddress ? (
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm">
+          <span aria-hidden="true">🔗</span>
+          <span>
+            Minting to your connected wallet{' '}
+            <span className="font-mono font-semibold">{shortenAddress(walletAddress, 5)}</span>
+            {config.demoMode ? ' (demo — simulated, nothing recorded on-chain)' : ' — the NFT will be recorded here on-chain.'}
+          </span>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm">
+          ⚠️ Connect a wallet first — your NFT records into the connected wallet.
+        </div>
+      )}
 
       <form className="grid gap-5 md:grid-cols-[200px_1fr]" onSubmit={submit}>
         {/* Image / preview */}
