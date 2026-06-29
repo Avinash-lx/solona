@@ -56,12 +56,40 @@ export function getProvider(
   });
 }
 
+/**
+ * Anchor's `Program` reads its program ID from `idl.address`. We override it
+ * with `config.programId` so that a single env var (`VITE_PROGRAM_ID`) is the
+ * source of truth for BOTH instruction targeting (the Program, here) and PDA
+ * derivation (`pdas.ts`, which also uses `config.programId`).
+ *
+ * Without this, deploying to a fresh program ID while the bundled `idl.json`
+ * still carries the old `address` would silently point the instructions at one
+ * program and the PDAs at another — every list/buy/delist would fail. Keying
+ * both off `VITE_PROGRAM_ID` means you only have to set one value after deploy.
+ */
+function configuredIdl(): Idl {
+  return { ...(IDL as Idl & { address: string }), address: config.programId.toBase58() } as Idl;
+}
+
 export function getProgram(
   connection: Connection,
   wallet?: AnchorWalletLike,
 ): Program<Idl> {
   const provider = getProvider(connection, wallet);
-  return new Program(IDL, provider);
+  return new Program(configuredIdl(), provider);
+}
+
+/**
+ * Thrown by {@link MarketplaceClient.assertReady} when the on-chain program
+ * isn't deployed or the marketplace isn't initialized. Hooks catch this to
+ * show one clear, actionable message instead of letting the wallet fail an
+ * opaque transaction simulation.
+ */
+export class MarketplaceNotReadyError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MarketplaceNotReadyError';
+  }
 }
 
 /**
@@ -82,6 +110,39 @@ export class MarketplaceClient {
     this.program = getProgram(connection, wallet);
     [this.marketplace] = findMarketplacePda(marketplaceName);
     [this.treasury] = findTreasuryPda(this.marketplace);
+  }
+
+  /**
+   * Pre-flight gate run before asking the user to sign a trade. Verifies the
+   * program is actually deployed and (optionally) that the marketplace is
+   * initialized, so the UI shows one clear message instead of an opaque
+   * wallet-side "Simulation failed". Pass `requireInitialized = false` for the
+   * admin initialize flow, which is what *creates* the marketplace account.
+   */
+  async assertReady(requireInitialized = true): Promise<void> {
+    const conn = this.program.provider.connection;
+    const programId = this.program.programId;
+
+    const programInfo = await conn.getAccountInfo(programId);
+    if (!programInfo || !programInfo.executable) {
+      throw new MarketplaceNotReadyError(
+        `The marketplace program isn't deployed on this network yet ` +
+          `(looked for ${programId.toBase58()}). Deploy the Anchor program to ` +
+          `Devnet (see anchor/README.md), set VITE_PROGRAM_ID to the deployed ` +
+          `address, then restart the app.`,
+      );
+    }
+
+    if (requireInitialized) {
+      const marketplaceInfo = await conn.getAccountInfo(this.marketplace);
+      if (!marketplaceInfo) {
+        throw new MarketplaceNotReadyError(
+          `The marketplace isn't initialized yet. Open /admin with the ` +
+            `authority wallet and click Initialize (the name must match ` +
+            `VITE_MARKETPLACE_NAME = "${config.marketplaceName}").`,
+        );
+      }
+    }
   }
 
   async initializeMarketplaceIx(
