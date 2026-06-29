@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { PublicKey } from '@solana/web3.js';
 import { useMarketplaceClient } from './useMarketplaceClient';
 import { useTxRunner } from './useTxRunner';
+import { ensureMarketplaceReady } from './ensureMarketplaceReady';
 import { fireConfetti } from '../lib/confetti';
 import { queryKeys } from '../lib/queryClient';
 import type { Listing } from '../types';
@@ -18,6 +19,7 @@ export function usePurchaseNft() {
   const purchase = useCallback(
     async (listing: Listing) => {
       if (!publicKey) return null;
+      if (!(await ensureMarketplaceReady(client))) return null;
       const ix = await client.purchaseNftIx(
         publicKey,
         new PublicKey(listing.seller),

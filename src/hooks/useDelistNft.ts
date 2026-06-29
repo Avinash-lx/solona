@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { PublicKey } from '@solana/web3.js';
 import { useMarketplaceClient } from './useMarketplaceClient';
 import { useTxRunner } from './useTxRunner';
+import { ensureMarketplaceReady } from './ensureMarketplaceReady';
 import { queryKeys } from '../lib/queryClient';
 import type { Listing } from '../types';
 
@@ -17,6 +18,7 @@ export function useDelistNft() {
   const delist = useCallback(
     async (listing: Listing) => {
       if (!publicKey) return null;
+      if (!(await ensureMarketplaceReady(client))) return null;
       const ix = await client.delistNftIx(publicKey, new PublicKey(listing.nftMint));
 
       return run([ix], {

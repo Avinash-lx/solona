@@ -3,6 +3,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMarketplaceClient } from './useMarketplaceClient';
 import { useTxRunner } from './useTxRunner';
+import { ensureMarketplaceReady } from './ensureMarketplaceReady';
 import { useMarketplace } from './useMarketplace';
 import { queryKeys } from '../lib/queryClient';
 import { config } from '../lib/config';
@@ -40,6 +41,9 @@ export function useAdminActions() {
   const initializeMarketplace = useCallback(
     async (name: string, feeBps: number) => {
       if (!publicKey) return null;
+      // Only require the program to be deployed; this call *creates* the
+      // marketplace account, so don't require it to already exist.
+      if (!(await ensureMarketplaceReady(client, false))) return null;
       const ix = await client.initializeMarketplaceIx(publicKey, name, feeBps);
       return run([ix], {
         pendingTitle: 'Initializing marketplace…',
