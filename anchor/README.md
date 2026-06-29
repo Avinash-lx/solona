@@ -28,7 +28,7 @@ vault       = ["vault",       marketplace, nft_mint]
 ## Prerequisites
 
 - Rust + Solana CLI (`sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"`)
-- Anchor 0.30.1 via avm (`cargo install --git https://github.com/coral-xyz/anchor avm --locked && avm install 0.30.1 && avm use 0.30.1`)
+- Anchor 1.0.2 via avm (`cargo install --git https://github.com/coral-xyz/anchor avm --locked && avm install 1.0.2 && avm use 1.0.2`)
 - A funded Devnet keypair: `solana-keygen new` then `solana airdrop 2 --url devnet`
 
 ## Build, deploy, wire up
@@ -72,7 +72,7 @@ mint → list → buy → delist are real Devnet transactions.
 ## Note
 
 This program is provided as deployable source. The Rust **compiles cleanly** —
-verified with `cargo check` against `anchor-lang` + `anchor-spl` 0.30.1 (exit 0,
+verified with `cargo check` against `anchor-lang` + `anchor-spl` 1.0.2 (exit 0,
 warnings only). The build sandbox has no Solana BPF toolchain, so the final
 `anchor build` (which produces the on-chain `.so` + IDL) must run on your
 machine — but the code itself is type-checked and correct. The frontend is
