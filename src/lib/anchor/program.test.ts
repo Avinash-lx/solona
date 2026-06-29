@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Connection } from '@solana/web3.js';
 import { MarketplaceClient, MarketplaceNotReadyError } from './program';
 import { findMarketplacePda } from './pdas';
+import { IDL } from './idl';
 import { config } from '../config';
 
 // No network calls happen here: Connection is lazy and we never send a tx.
@@ -17,6 +18,24 @@ describe('MarketplaceClient program ID', () => {
     const client = new MarketplaceClient(connection, undefined, 'unit-test-market');
     const [expected] = findMarketplacePda('unit-test-market', client.program.programId);
     expect(client.marketplace.toBase58()).toBe(expected.toBase58());
+  });
+});
+
+describe('IDL account flags', () => {
+  // Regression guard: the program marks `marketplace` as `mut` in every
+  // instruction that touches it (list_nft bumps listings_count). A missing
+  // `writable: true` in the IDL builds a read-only account meta and the program
+  // fails with ConstraintMut (0x7d0 / 2000).
+  it('marks marketplace writable in every instruction that uses it', () => {
+    const idl = IDL as unknown as {
+      instructions: { name: string; accounts: { name: string; writable?: boolean }[] }[];
+    };
+    for (const ix of idl.instructions) {
+      const marketplace = ix.accounts.find((a) => a.name === 'marketplace');
+      if (marketplace) {
+        expect(marketplace.writable, `${ix.name}.marketplace must be writable`).toBe(true);
+      }
+    }
   });
 });
 
