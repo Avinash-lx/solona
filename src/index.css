@@ -97,9 +97,11 @@
 .wallet-adapter-button-trigger {
   @apply !bg-gradient-to-r !from-brand-500 !to-brand-400;
 }
+/*
+ * NOTE: do NOT override the modal background. The wallet-adapter modal ships its
+ * own dark, high-contrast styling; forcing a white background made the wallet
+ * list text invisible in light mode. We only round the corners.
+ */
 .wallet-adapter-modal-wrapper {
-  @apply !rounded-2xl !bg-white dark:!bg-zinc-900;
-}
-.wallet-adapter-modal-button-close {
-  @apply !bg-zinc-100 dark:!bg-zinc-800;
+  @apply !rounded-2xl;
 }
