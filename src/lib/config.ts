@@ -10,7 +10,33 @@ function required(value: string | undefined, name: string): string {
   return value;
 }
 
-const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://api.devnet.solana.com';
+const PUBLIC_DEVNET_RPC = 'https://api.devnet.solana.com';
+
+/**
+ * Resolve the RPC endpoint, guarding against a common footgun: pasting a
+ * provider URL that still contains a PLACEHOLDER api key (e.g. a Helius URL
+ * with `YOUR_KEY` / `YOUR_REAL_HELIUS_KEY` left in). Such a URL 401s on every
+ * request, which surfaces in the UI as an opaque "Transport error" when
+ * sending a transaction. Rather than fail cryptically, fall back to the free
+ * public Devnet RPC and warn loudly in the console.
+ */
+function resolveRpcUrl(raw: string | undefined): string {
+  const url = (raw ?? '').trim();
+  if (!url) return PUBLIC_DEVNET_RPC;
+  const looksLikePlaceholder = /your[_-]?(real[_-]?)?[a-z]*[_-]?key/i.test(url);
+  if (looksLikePlaceholder) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[config] VITE_RPC_URL still contains a placeholder API key: "${url}". ` +
+        `That returns 401 and shows up as a "Transport error". Falling back to ` +
+        `${PUBLIC_DEVNET_RPC}. Set VITE_RPC_URL to a real RPC URL (or remove it).`,
+    );
+    return PUBLIC_DEVNET_RPC;
+  }
+  return url;
+}
+
+const RPC_URL = resolveRpcUrl(import.meta.env.VITE_RPC_URL);
 
 /** Derive a ws:// endpoint from the http(s) RPC if none is provided. */
 function deriveWsUrl(http: string): string {
