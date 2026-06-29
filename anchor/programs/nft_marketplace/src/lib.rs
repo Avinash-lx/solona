@@ -55,7 +55,7 @@ pub mod nft_marketplace {
         // Move the NFT from the seller into the program-owned vault.
         token_transfer(
             CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.token_program.key(),
                 TokenTransfer {
                     from: ctx.accounts.seller_token_account.to_account_info(),
                     to: ctx.accounts.vault.to_account_info(),
@@ -82,7 +82,7 @@ pub mod nft_marketplace {
         // Pay the seller and the treasury from the buyer.
         sol_transfer(
             CpiContext::new(
-                ctx.accounts.system_program.to_account_info(),
+                ctx.accounts.system_program.key(),
                 SolTransfer {
                     from: ctx.accounts.buyer.to_account_info(),
                     to: ctx.accounts.seller.to_account_info(),
@@ -93,7 +93,7 @@ pub mod nft_marketplace {
         if fee > 0 {
             sol_transfer(
                 CpiContext::new(
-                    ctx.accounts.system_program.to_account_info(),
+                    ctx.accounts.system_program.key(),
                     SolTransfer {
                         from: ctx.accounts.buyer.to_account_info(),
                         to: ctx.accounts.treasury.to_account_info(),
@@ -110,7 +110,7 @@ pub mod nft_marketplace {
 
         token_transfer(
             CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.token_program.key(),
                 TokenTransfer {
                     from: ctx.accounts.vault.to_account_info(),
                     to: ctx.accounts.buyer_token_account.to_account_info(),
@@ -123,7 +123,7 @@ pub mod nft_marketplace {
 
         // Close the emptied vault, returning rent to the seller.
         close_account(CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.key(),
             CloseAccount {
                 account: ctx.accounts.vault.to_account_info(),
                 destination: ctx.accounts.seller.to_account_info(),
@@ -145,7 +145,7 @@ pub mod nft_marketplace {
 
         token_transfer(
             CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.token_program.key(),
                 TokenTransfer {
                     from: ctx.accounts.vault.to_account_info(),
                     to: ctx.accounts.seller_token_account.to_account_info(),
@@ -157,7 +157,7 @@ pub mod nft_marketplace {
         )?;
 
         close_account(CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.key(),
             CloseAccount {
                 account: ctx.accounts.vault.to_account_info(),
                 destination: ctx.accounts.seller.to_account_info(),
