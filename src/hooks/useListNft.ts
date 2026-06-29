@@ -30,6 +30,9 @@ export function useListNft() {
       const [vaultPda] = findVaultPda(client.marketplace, nftMint);
 
       return run([ix], {
+        // Listing inits a PDA listing account + a token-account vault and runs a
+        // token-transfer CPI — give it headroom over the 200k default.
+        computeUnitLimit: 300_000,
         pendingTitle: 'Listing NFT…',
         successTitle: 'NFT listed',
         successDescription: `Listed for ${priceSol} SOL. It's now in escrow.`,
