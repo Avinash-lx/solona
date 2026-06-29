@@ -76,7 +76,9 @@ export function useMintNft() {
 
         const umi = createUmi(config.rpcUrl)
           .use(mplTokenMetadata())
-          .use(irysUploader({ address: irysAddress }))
+          // `providerUrl` tells Irys which Solana RPC to fund the upload on —
+          // without it, funding/signing can fail on Devnet.
+          .use(irysUploader({ address: irysAddress, providerUrl: config.rpcUrl }))
           // Sign with the user's connected wallet adapter.
           .use(walletAdapterIdentity(wallet));
 
@@ -84,29 +86,37 @@ export function useMintNft() {
         let uri = input.metadataUri?.trim();
         if (!uri) {
           setStatus({ stage: 'uploading' });
+          try {
+            let imageUri = input.imageUrl?.trim() ?? '';
+            if (input.imageFile) {
+              const bytes = new Uint8Array(await input.imageFile.arrayBuffer());
+              const file = createGenericFile(bytes, input.imageFile.name, {
+                contentType: input.imageFile.type || 'image/png',
+              });
+              const [uploaded] = await umi.uploader.upload([file]);
+              imageUri = uploaded;
+            }
 
-          let imageUri = input.imageUrl?.trim() ?? '';
-          if (input.imageFile) {
-            const bytes = new Uint8Array(await input.imageFile.arrayBuffer());
-            const file = createGenericFile(bytes, input.imageFile.name, {
-              contentType: input.imageFile.type || 'image/png',
-            });
-            const [uploaded] = await umi.uploader.upload([file]);
-            imageUri = uploaded;
+            const json = {
+              name: input.name,
+              symbol: input.symbol,
+              description: input.description,
+              image: imageUri,
+              attributes: input.attributes.filter((a) => a.trait_type && a.value),
+              properties: {
+                files: imageUri ? [{ uri: imageUri, type: input.imageFile?.type ?? 'image/png' }] : [],
+                category: 'image',
+              },
+            };
+            uri = await umi.uploader.uploadJson(json);
+          } catch (uploadErr) {
+            // Irys uploads can be flaky on Devnet. Surface a clear, actionable
+            // message pointing at the zero-upload path.
+            console.error('Irys upload failed:', uploadErr);
+            throw new Error(
+              "Image upload (Irys) failed on Devnet. Tip: tick 'Advanced: use an existing metadata JSON URI' to mint with no upload, or paste an image URL instead of uploading a file.",
+            );
           }
-
-          const json = {
-            name: input.name,
-            symbol: input.symbol,
-            description: input.description,
-            image: imageUri,
-            attributes: input.attributes.filter((a) => a.trait_type && a.value),
-            properties: {
-              files: imageUri ? [{ uri: imageUri, type: input.imageFile?.type ?? 'image/png' }] : [],
-              category: 'image',
-            },
-          };
-          uri = await umi.uploader.uploadJson(json);
         }
 
         // 2) Create the NFT.
