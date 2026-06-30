@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { PublicKey } from '@solana/web3.js';
 import { useMarketplaceClient } from './useMarketplaceClient';
 import { useTxRunner } from './useTxRunner';
+import { ensureMarketplaceReady } from './ensureMarketplaceReady';
 import { findListingPda, findVaultPda } from '../lib/anchor/pdas';
 import { solToLamports } from '../lib/anchor/feeMath';
 import { LAMPORTS_PER_SOL } from '../lib/config';
@@ -20,6 +21,7 @@ export function useListNft() {
   const list = useCallback(
     async (mint: string, priceSol: number) => {
       if (!publicKey) return null;
+      if (!(await ensureMarketplaceReady(client))) return null;
       const nftMint = new PublicKey(mint);
       const priceLamports = solToLamports(priceSol);
       const ix = await client.listNftIx(publicKey, nftMint, priceLamports);
@@ -28,6 +30,9 @@ export function useListNft() {
       const [vaultPda] = findVaultPda(client.marketplace, nftMint);
 
       return run([ix], {
+        // Listing inits a PDA listing account + a token-account vault and runs a
+        // token-transfer CPI — give it headroom over the 200k default.
+        computeUnitLimit: 300_000,
         pendingTitle: 'Listing NFT…',
         successTitle: 'NFT listed',
         successDescription: `Listed for ${priceSol} SOL. It's now in escrow.`,

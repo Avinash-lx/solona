@@ -43,7 +43,7 @@
       "name": "list_nft",
       "discriminator": [88, 221, 93, 166, 63, 220, 106, 232],
       "accounts": [
-        { "name": "marketplace" },
+        { "name": "marketplace", "writable": true },
         {
           "name": "listing",
           "writable": true,

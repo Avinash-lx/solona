@@ -14,7 +14,6 @@ import { LoadingState } from '../../components/ui/states';
 import { BuyModal } from '../marketplace/BuyModal';
 import { DelistButton } from '../portfolio/DelistButton';
 import { WatchlistAlert } from './WatchlistAlert';
-import { OffersPanel } from '../offers/OffersPanel';
 import { notify } from '../../lib/notifications';
 import { explorerUrl } from '../../lib/config';
 import { formatSol, isValidPublicKey, shortenAddress } from '../../lib/utils';
@@ -127,8 +126,6 @@ export function NftDetailPage() {
         </div>
 
         {listing && <WatchlistAlert mint={mint} />}
-
-        <OffersPanel mint={mint} listing={listing} />
 
         {metadata && metadata.attributes.length > 0 && (
           <div className="card p-5">
