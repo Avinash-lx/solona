@@ -123,6 +123,41 @@ wallet and all three operations are verified live.
 
 ---
 
+## Latency & TPS benchmarking (Solana performance report)
+
+To produce a performance report like a Sui/Aptos benchmark — **latency**,
+**throughput (TPS)**, and **on-chain cost** per operation — run:
+
+```bash
+npm run bench
+#   …or choose the sample size:
+node scripts/stress-test.mjs bench --count 10
+```
+
+It runs N `mint → list → delist` round-trips and reports:
+
+- **Latency (ms)** — min / avg / max per operation, measured submit → confirmed
+  (the same "CLI execution timing" methodology Sui-style reports use).
+- **Throughput (TPS)** — total txs ÷ wall-clock seconds (sequential). For the
+  *concurrent* number (Solana's parallel strength), use `concurrent-list`, which
+  now prints TPS too.
+- **On-chain cost** — fee (lamports/SOL) + compute units consumed per program
+  instruction, read from the confirmed transaction meta.
+
+### How each metric is defined
+| Metric | Definition | How it's obtained |
+|--------|-----------|-------------------|
+| Latency | time from submitting a tx to `confirmed` | `performance.now()` around each send+confirm |
+| TPS (sequential) | `txCount / totalSeconds` running back-to-back | batch timer in `bench` / `mint-list` |
+| TPS (concurrent) | `txCount / wallClock` firing in parallel | `concurrent-list` summary line |
+| Fee | lamports paid (base + priority) | `getTransaction(sig).meta.fee` |
+| Compute | CU consumed by the instruction | `getTransaction(sig).meta.computeUnitsConsumed` |
+
+> Like the Sui report's note: a sequential CLI/script measurement is bounded by
+> network round-trips + confirmation, **not** the chain's parallel ceiling. Use
+> a dedicated RPC (`RPC=…`) and `concurrent-list` to approach the real ceiling,
+> and report sequential numbers as a baseline.
+
 ## Knobs (env vars)
 
 All scripts accept:
