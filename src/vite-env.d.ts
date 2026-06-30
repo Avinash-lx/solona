@@ -6,7 +6,6 @@ interface ImportMetaEnv {
   readonly VITE_PROGRAM_ID: string;
   readonly VITE_NETWORK: string;
   readonly VITE_MARKETPLACE_NAME: string;
-  readonly VITE_FEATURE_OFFERS: string;
   readonly VITE_AI_PROXY_URL: string;
 }
 
