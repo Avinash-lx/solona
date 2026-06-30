@@ -37,6 +37,61 @@ describe('IDL account flags', () => {
       }
     }
   });
+
+  // Full lock-in of the three core trade instructions: account order + each
+  // account's writable/signer flags must mirror the program's #[account(..)]
+  // constraints in anchor/programs/nft_marketplace/src/lib.rs. If these drift,
+  // the on-chain program rejects the tx (ConstraintMut / signature errors).
+  const TRADE_FLAGS: Record<string, [string, boolean, boolean][]> = {
+    // name, writable, signer
+    list_nft: [
+      ['marketplace', true, false],
+      ['listing', true, false],
+      ['seller', true, true],
+      ['nft_mint', false, false],
+      ['seller_token_account', true, false],
+      ['vault', true, false],
+      ['token_program', false, false],
+      ['system_program', false, false],
+    ],
+    purchase_nft: [
+      ['marketplace', true, false],
+      ['listing', true, false],
+      ['buyer', true, true],
+      ['seller', true, false],
+      ['treasury', true, false],
+      ['nft_mint', false, false],
+      ['vault', true, false],
+      ['buyer_token_account', true, false],
+      ['token_program', false, false],
+      ['associated_token_program', false, false],
+      ['system_program', false, false],
+    ],
+    delist_nft: [
+      ['marketplace', true, false],
+      ['listing', true, false],
+      ['seller', true, true],
+      ['nft_mint', false, false],
+      ['vault', true, false],
+      ['seller_token_account', true, false],
+      ['token_program', false, false],
+    ],
+  };
+
+  for (const [ixName, expected] of Object.entries(TRADE_FLAGS)) {
+    it(`${ixName}: account order + writable/signer flags match the program`, () => {
+      const idl = IDL as unknown as {
+        instructions: {
+          name: string;
+          accounts: { name: string; writable?: boolean; signer?: boolean }[];
+        }[];
+      };
+      const ix = idl.instructions.find((i) => i.name === ixName);
+      expect(ix, `${ixName} missing from IDL`).toBeTruthy();
+      const got = ix!.accounts.map((a) => [a.name, !!a.writable, !!a.signer]);
+      expect(got).toEqual(expected);
+    });
+  }
 });
 
 describe('MarketplaceNotReadyError', () => {

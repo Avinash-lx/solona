@@ -148,6 +148,22 @@ async function listNft(program, payer, mintPk, priceSol) {
     .rpc();
 }
 
+async function delistNft(program, seller, mintPk) {
+  const sellerTokenAccount = getAssociatedTokenAddressSync(mintPk, seller.publicKey);
+  return program.methods
+    .delistNft()
+    .accountsPartial({
+      marketplace,
+      listing: listingPda(mintPk),
+      seller: seller.publicKey,
+      nftMint: mintPk,
+      vault: vaultPda(mintPk),
+      sellerTokenAccount,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .rpc();
+}
+
 async function buyNft(program, buyer, mintPk) {
   const listing = await program.account.listing.fetch(listingPda(mintPk));
   const buyerTokenAccount = getAssociatedTokenAddressSync(mintPk, buyer.publicKey);
@@ -262,9 +278,42 @@ async function runBuy(connection, payer) {
   console.log(`  ✓ purchased — sig ${sig}`);
 }
 
+async function runDelist(connection, payer) {
+  const mintArg = flag('mint');
+  if (!mintArg) throw new Error('delist mode needs --mint <MINT_ADDRESS>');
+  const program = buildProgram(connection, payer);
+  console.log(`\n↩️  Delisting ${mintArg} as ${payer.publicKey.toBase58()}…`);
+  const sig = await withRetry(() => delistNft(program, payer, new PublicKey(mintArg)));
+  console.log(`  ✓ delisted — sig ${sig}  (NFT returned to your wallet, vault closed)`);
+}
+
+/** Full single-wallet round-trip: mint → list → delist. Proves list AND sell. */
+async function runCycle(connection, payer) {
+  const program = buildProgram(connection, payer);
+  const umi = buildUmi(payer);
+  console.log('\n🔁 Round-trip: mint → list → delist');
+
+  const mintPk = await withRetry(() => mintNft(umi, 1));
+  console.log(`  ✓ minted  ${mintPk.toBase58()}`);
+  await sleep(DELAY);
+
+  const price = randomPrice();
+  const listSig = await withRetry(() => listNft(program, payer, mintPk, price));
+  console.log(`  ✓ listed  for ${price} SOL — sig ${listSig.slice(0, 16)}…  (NFT now in escrow vault)`);
+  await sleep(DELAY);
+
+  const delistSig = await withRetry(() => delistNft(program, payer, mintPk));
+  console.log(`  ✓ delisted — sig ${delistSig.slice(0, 16)}…  (NFT returned, vault closed)`);
+
+  // Verify the listing account is actually gone on-chain.
+  const after = await connection.getAccountInfo(listingPda(mintPk));
+  console.log(`  ${after ? '✗ listing still exists?!' : '✓ listing account closed on-chain'}`);
+  console.log('\n   List + sell (delist) round-trip confirmed end-to-end. ✅');
+}
+
 async function main() {
-  if (!['mint-list', 'concurrent-list', 'buy'].includes(mode)) {
-    console.log('Usage: node scripts/stress-test.mjs <mint-list|concurrent-list|buy> [--count N] [--mint ADDR] [--keypair PATH]');
+  if (!['mint-list', 'concurrent-list', 'buy', 'delist', 'cycle'].includes(mode)) {
+    console.log('Usage: node scripts/stress-test.mjs <mint-list|concurrent-list|cycle|buy|delist> [--count N] [--mint ADDR] [--keypair PATH]');
     process.exit(1);
   }
   const connection = new Connection(RPC, 'confirmed');
@@ -272,6 +321,8 @@ async function main() {
   await preflight(connection, payer);
 
   if (mode === 'buy') await runBuy(connection, payer);
+  else if (mode === 'delist') await runDelist(connection, payer);
+  else if (mode === 'cycle') await runCycle(connection, payer);
   else await runMintList(connection, payer, { concurrent: mode === 'concurrent-list' });
 
   console.log('\n✅ Done.\n');

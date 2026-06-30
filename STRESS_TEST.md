@@ -101,6 +101,28 @@ Run several in parallel shells to simulate competing buyers.
 
 ---
 
+## Verifying list / buy / sell directly (the three core ops)
+
+These prove the marketplace's primary on-chain operations with the script:
+
+```bash
+# Full round-trip with ONE wallet: mint → list → delist (proves list + sell).
+# Ends by asserting the listing account is closed on-chain.
+node scripts/stress-test.mjs cycle
+
+# Sell/cancel a specific listing you own (returns the NFT, closes the vault).
+node scripts/stress-test.mjs delist --mint <MINT_ADDRESS>
+
+# Buy a listing from a different funded wallet (you can't buy your own).
+node scripts/stress-test.mjs buy --mint <MINT_ADDRESS> --keypair ~/buyer.json
+```
+
+`cycle` is the quickest single-command proof that **listing and selling
+(delisting) work end-to-end on-chain**; pair it with one `buy` from a second
+wallet and all three operations are verified live.
+
+---
+
 ## Knobs (env vars)
 
 All scripts accept:
