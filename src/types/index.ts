@@ -135,12 +135,3 @@ export interface PriceAlert {
   thresholdSol: number;
   createdAt: number;
 }
-
-/** A bid/offer made on an NFT (demo-functional; live needs a new on-chain ix). */
-export interface Offer {
-  id: string;
-  mint: string;
-  bidder: string;
-  priceSol: number;
-  createdAt: number;
-}

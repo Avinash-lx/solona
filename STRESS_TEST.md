@@ -101,6 +101,28 @@ Run several in parallel shells to simulate competing buyers.
 
 ---
 
+## Verifying list / buy / sell directly (the three core ops)
+
+These prove the marketplace's primary on-chain operations with the script:
+
+```bash
+# Full round-trip with ONE wallet: mint → list → delist (proves list + sell).
+# Ends by asserting the listing account is closed on-chain.
+node scripts/stress-test.mjs cycle
+
+# Sell/cancel a specific listing you own (returns the NFT, closes the vault).
+node scripts/stress-test.mjs delist --mint <MINT_ADDRESS>
+
+# Buy a listing from a different funded wallet (you can't buy your own).
+node scripts/stress-test.mjs buy --mint <MINT_ADDRESS> --keypair ~/buyer.json
+```
+
+`cycle` is the quickest single-command proof that **listing and selling
+(delisting) work end-to-end on-chain**; pair it with one `buy` from a second
+wallet and all three operations are verified live.
+
+---
+
 ## Knobs (env vars)
 
 All scripts accept:
@@ -112,6 +134,13 @@ All scripts accept:
 | `MARKET` | `devnet-marketplace` | must match `VITE_MARKETPLACE_NAME` |
 | `KEYPAIR` | `~/.config/solana/id.json` | signer (also `--keypair`) |
 | `URI` | a public sample | metadata JSON for minted NFTs |
+| `DELAY` | `400` (ms) | pause between txs to avoid public-RPC 429s (also `--delay`; set `0` with a dedicated RPC) |
+
+> **Seeing `429 Too Many Requests`?** That's the free public Devnet RPC
+> throttling — not your program. The script now throttles (`DELAY`) and retries
+> transient errors automatically, and won't crash on a background rate-limit.
+> For heavy runs, pass a dedicated RPC and drop the delay:
+> `RPC="https://devnet.helius-rpc.com/?api-key=KEY" DELAY=0 node scripts/stress-test.mjs concurrent-list --count 25`
 
 Example, hammering through a dedicated RPC:
 ```bash

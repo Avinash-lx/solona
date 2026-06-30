@@ -51,9 +51,6 @@ export const config = {
   ),
   network: (import.meta.env.VITE_NETWORK || 'devnet') as Cluster,
   marketplaceName: import.meta.env.VITE_MARKETPLACE_NAME || 'devnet-marketplace',
-  features: {
-    offers: import.meta.env.VITE_FEATURE_OFFERS === 'true',
-  },
   ai: {
     /**
      * Optional URL of a serverless endpoint that proxies to Claude (keeps the

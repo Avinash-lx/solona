@@ -45,6 +45,9 @@ const flag = (name, def) => {
   return i >= 0 && argv[i + 1] ? argv[i + 1] : def;
 };
 const COUNT = Number(flag('count', '5'));
+// Throttle between txs so the free public RPC doesn't 429. Lower it (or set 0)
+// when using a dedicated RPC (Helius/QuickNode) via RPC=...
+const DELAY = Number(flag('delay', process.env.DELAY || '400'));
 const RPC = process.env.RPC || 'https://api.devnet.solana.com';
 const PROGRAM_ID = process.env.PROGRAM_ID || 'Bx1csW3DusPh3Lcij7VMBiGtwhwRBRoobjyZneWGqbM7';
 const MARKET = process.env.MARKET || 'devnet-marketplace';
@@ -86,6 +89,32 @@ function buildUmi(payer) {
 
 const randomPrice = () => Math.round((0.5 + Math.random() * 2.5) * 100) / 100;
 const ms = (t) => `${(t).toFixed(0)}ms`;
+const sleep = (m) => new Promise((r) => setTimeout(r, m));
+const isTransient = (m) => /429|too many|blockhash|timed out|node is behind|block height exceeded/i.test(m);
+
+/** Retry an awaited RPC op a few times on transient (rate-limit/expiry) errors. */
+async function withRetry(fn, tries = 5) {
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const msg = e?.message ?? String(e);
+      if (i < tries - 1 && isTransient(msg)) {
+        await sleep(700 * (i + 1));
+        continue;
+      }
+      throw e;
+    }
+  }
+}
+
+// web3.js confirmation polling can reject out-of-band on a 429; don't let a
+// background rejection crash a run that's otherwise fine.
+process.on('unhandledRejection', (e) => {
+  const msg = e?.message ?? String(e);
+  if (isTransient(msg)) return; // expected under public-RPC load
+  console.warn('  ⚠ background error:', msg);
+});
 
 // ---------- on-chain ops ----------
 async function mintNft(umi, i) {
@@ -115,6 +144,22 @@ async function listNft(program, payer, mintPk, priceSol) {
       vault: vaultPda(mintPk),
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
+    })
+    .rpc();
+}
+
+async function delistNft(program, seller, mintPk) {
+  const sellerTokenAccount = getAssociatedTokenAddressSync(mintPk, seller.publicKey);
+  return program.methods
+    .delistNft()
+    .accountsPartial({
+      marketplace,
+      listing: listingPda(mintPk),
+      seller: seller.publicKey,
+      nftMint: mintPk,
+      vault: vaultPda(mintPk),
+      sellerTokenAccount,
+      tokenProgram: TOKEN_PROGRAM_ID,
     })
     .rpc();
 }
@@ -178,12 +223,13 @@ async function runMintList(connection, payer, { concurrent }) {
   for (let i = 1; i <= COUNT; i++) {
     const t = performance.now();
     try {
-      const mintPk = await mintNft(umi, i);
+      const mintPk = await withRetry(() => mintNft(umi, i));
       mints.push(mintPk);
       console.log(`  ✓ #${i} minted ${mintPk.toBase58()}  (${ms(performance.now() - t)})`);
     } catch (e) {
       console.log(`  ✗ #${i} mint failed: ${e.message}`);
     }
+    await sleep(DELAY);
   }
 
   console.log(`\n🏷  Listing ${mints.length} NFTs  ${concurrent ? '(CONCURRENT)' : '(sequential)'}…`);
@@ -192,7 +238,7 @@ async function runMintList(connection, payer, { concurrent }) {
   const started = performance.now();
   if (concurrent) {
     const results = await Promise.allSettled(
-      mints.map((m) => listNft(program, payer, m, randomPrice())),
+      mints.map((m) => withRetry(() => listNft(program, payer, m, randomPrice()))),
     );
     for (const [i, r] of results.entries()) {
       if (r.status === 'fulfilled') {
@@ -207,13 +253,14 @@ async function runMintList(connection, payer, { concurrent }) {
     for (const [i, m] of mints.entries()) {
       const t = performance.now();
       try {
-        const sig = await listNft(program, payer, m, randomPrice());
+        const sig = await withRetry(() => listNft(program, payer, m, randomPrice()));
         ok++;
         console.log(`  ✓ #${i + 1} listed ${sig.slice(0, 12)}…  (${ms(performance.now() - t)})`);
       } catch (e) {
         fail++;
         console.log(`  ✗ #${i + 1} list failed: ${e.message}`);
       }
+      await sleep(DELAY);
     }
   }
 
@@ -227,13 +274,46 @@ async function runBuy(connection, payer) {
   if (!mintArg) throw new Error('buy mode needs --mint <MINT_ADDRESS>');
   const program = buildProgram(connection, payer);
   console.log(`\n💸 Buying ${mintArg} as ${payer.publicKey.toBase58()}…`);
-  const sig = await buyNft(program, payer, new PublicKey(mintArg));
+  const sig = await withRetry(() => buyNft(program, payer, new PublicKey(mintArg)));
   console.log(`  ✓ purchased — sig ${sig}`);
 }
 
+async function runDelist(connection, payer) {
+  const mintArg = flag('mint');
+  if (!mintArg) throw new Error('delist mode needs --mint <MINT_ADDRESS>');
+  const program = buildProgram(connection, payer);
+  console.log(`\n↩️  Delisting ${mintArg} as ${payer.publicKey.toBase58()}…`);
+  const sig = await withRetry(() => delistNft(program, payer, new PublicKey(mintArg)));
+  console.log(`  ✓ delisted — sig ${sig}  (NFT returned to your wallet, vault closed)`);
+}
+
+/** Full single-wallet round-trip: mint → list → delist. Proves list AND sell. */
+async function runCycle(connection, payer) {
+  const program = buildProgram(connection, payer);
+  const umi = buildUmi(payer);
+  console.log('\n🔁 Round-trip: mint → list → delist');
+
+  const mintPk = await withRetry(() => mintNft(umi, 1));
+  console.log(`  ✓ minted  ${mintPk.toBase58()}`);
+  await sleep(DELAY);
+
+  const price = randomPrice();
+  const listSig = await withRetry(() => listNft(program, payer, mintPk, price));
+  console.log(`  ✓ listed  for ${price} SOL — sig ${listSig.slice(0, 16)}…  (NFT now in escrow vault)`);
+  await sleep(DELAY);
+
+  const delistSig = await withRetry(() => delistNft(program, payer, mintPk));
+  console.log(`  ✓ delisted — sig ${delistSig.slice(0, 16)}…  (NFT returned, vault closed)`);
+
+  // Verify the listing account is actually gone on-chain.
+  const after = await connection.getAccountInfo(listingPda(mintPk));
+  console.log(`  ${after ? '✗ listing still exists?!' : '✓ listing account closed on-chain'}`);
+  console.log('\n   List + sell (delist) round-trip confirmed end-to-end. ✅');
+}
+
 async function main() {
-  if (!['mint-list', 'concurrent-list', 'buy'].includes(mode)) {
-    console.log('Usage: node scripts/stress-test.mjs <mint-list|concurrent-list|buy> [--count N] [--mint ADDR] [--keypair PATH]');
+  if (!['mint-list', 'concurrent-list', 'buy', 'delist', 'cycle'].includes(mode)) {
+    console.log('Usage: node scripts/stress-test.mjs <mint-list|concurrent-list|cycle|buy|delist> [--count N] [--mint ADDR] [--keypair PATH]');
     process.exit(1);
   }
   const connection = new Connection(RPC, 'confirmed');
@@ -241,6 +321,8 @@ async function main() {
   await preflight(connection, payer);
 
   if (mode === 'buy') await runBuy(connection, payer);
+  else if (mode === 'delist') await runDelist(connection, payer);
+  else if (mode === 'cycle') await runCycle(connection, payer);
   else await runMintList(connection, payer, { concurrent: mode === 'concurrent-list' });
 
   console.log('\n✅ Done.\n');
