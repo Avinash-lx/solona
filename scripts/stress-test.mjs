@@ -89,6 +89,30 @@ function buildUmi(payer) {
 
 const randomPrice = () => Math.round((0.5 + Math.random() * 2.5) * 100) / 100;
 const ms = (t) => `${(t).toFixed(0)}ms`;
+
+/** min / avg / max over a sample array. */
+function stats(arr) {
+  if (!arr.length) return { min: 0, avg: 0, max: 0, n: 0 };
+  const s = [...arr].sort((a, b) => a - b);
+  return { min: s[0], avg: arr.reduce((a, b) => a + b, 0) / arr.length, max: s[s.length - 1], n: arr.length };
+}
+
+/** Fetch a confirmed tx's fee (lamports) + compute units consumed. */
+async function txCost(connection, sig) {
+  for (let i = 0; i < 6; i++) {
+    try {
+      const tx = await connection.getTransaction(sig, {
+        commitment: 'confirmed',
+        maxSupportedTransactionVersion: 0,
+      });
+      if (tx?.meta) return { fee: tx.meta.fee, cu: tx.meta.computeUnitsConsumed ?? null };
+    } catch {
+      /* not queryable yet */
+    }
+    await sleep(600);
+  }
+  return { fee: null, cu: null };
+}
 const sleep = (m) => new Promise((r) => setTimeout(r, m));
 const isTransient = (m) => /429|too many|blockhash|timed out|node is behind|block height exceeded/i.test(m);
 
@@ -265,7 +289,8 @@ async function runMintList(connection, payer, { concurrent }) {
   }
 
   const total = performance.now() - started;
-  console.log(`\n📊 Listings: ${ok} ok / ${fail} failed  ·  ${ms(total)} total  ·  ${ms(total / Math.max(ok + fail, 1))}/tx avg`);
+  const tps = ok / (total / 1000);
+  console.log(`\n📊 Listings: ${ok} ok / ${fail} failed  ·  ${ms(total)} total  ·  ${ms(total / Math.max(ok + fail, 1))}/tx avg  ·  ${tps.toFixed(3)} TPS`);
   console.log(`   Open the app's Browse page — the grid + Live activity should reflect all ${ok} on-chain.`);
 }
 
@@ -311,9 +336,86 @@ async function runCycle(connection, payer) {
   console.log('\n   List + sell (delist) round-trip confirmed end-to-end. ✅');
 }
 
+/**
+ * Latency + throughput + cost benchmark (mirrors a Sui-style performance report
+ * but for Solana). Runs N mint→list→delist round-trips, timing each operation
+ * (submit → confirmed), then reports per-op latency (min/avg/max), sequential
+ * TPS, and on-chain fee + compute units for the program instructions.
+ */
+async function runBench(connection, payer) {
+  const program = buildProgram(connection, payer);
+  const umi = buildUmi(payer);
+  const N = COUNT;
+  console.log(`\n📐 Benchmark — ${N} samples per operation (mint → list → delist)\n`);
+
+  const lat = { mint_nft: [], list_nft: [], delist_nft: [] };
+  const fee = { list_nft: [], delist_nft: [] };
+  const cu = { list_nft: [], delist_nft: [] };
+
+  const batchStart = performance.now();
+  for (let i = 1; i <= N; i++) {
+    let t = performance.now();
+    const mintPk = await withRetry(() => mintNft(umi, i));
+    lat.mint_nft.push(performance.now() - t);
+    await sleep(DELAY);
+
+    t = performance.now();
+    const listSig = await withRetry(() => listNft(program, payer, mintPk, randomPrice()));
+    lat.list_nft.push(performance.now() - t);
+    const lc = await txCost(connection, listSig);
+    if (lc.fee != null) fee.list_nft.push(lc.fee);
+    if (lc.cu != null) cu.list_nft.push(lc.cu);
+    await sleep(DELAY);
+
+    t = performance.now();
+    const delSig = await withRetry(() => delistNft(program, payer, mintPk));
+    lat.delist_nft.push(performance.now() - t);
+    const dc = await txCost(connection, delSig);
+    if (dc.fee != null) fee.delist_nft.push(dc.fee);
+    if (dc.cu != null) cu.delist_nft.push(dc.cu);
+
+    console.log(`  ✓ sample ${i}/${N}`);
+    await sleep(DELAY);
+  }
+  const batchMs = performance.now() - batchStart;
+
+  console.log('\n  Latency (ms)        min      avg      max    samples');
+  console.log('  ' + '-'.repeat(50));
+  for (const op of ['mint_nft', 'list_nft', 'delist_nft']) {
+    const s = stats(lat[op]);
+    console.log(
+      `  ${op.padEnd(14)} ${s.min.toFixed(0).padStart(8)} ${s.avg.toFixed(0).padStart(8)} ${s.max
+        .toFixed(0)
+        .padStart(8)}    ${s.n}`,
+    );
+  }
+
+  const totalTx = N * 3;
+  const tps = totalTx / (batchMs / 1000);
+  console.log('\n  Throughput (sequential)');
+  console.log('  ' + '-'.repeat(50));
+  console.log(`  ${totalTx} txs (mint+list+delist) in ${(batchMs / 1000).toFixed(2)} s`);
+  console.log(`  = ${tps.toFixed(3)} TPS   (avg ${(batchMs / totalTx).toFixed(0)} ms/tx)`);
+
+  console.log('\n  On-chain cost (program instructions)');
+  console.log('  ' + '-'.repeat(50));
+  for (const op of ['list_nft', 'delist_nft']) {
+    const f = stats(fee[op]);
+    const c = stats(cu[op]);
+    console.log(
+      `  ${op.padEnd(14)} fee ~${(f.avg / 1e9).toFixed(6)} SOL (${f.avg.toFixed(0)} lamports)  ·  compute ~${c.avg.toFixed(0)} CU`,
+    );
+  }
+  console.log(
+    '\n  Notes: sequential CLI-style measurement (network + confirmation bound),\n' +
+      '  not Solana’s parallel ceiling. For concurrent TPS use `concurrent-list`.\n' +
+      '  `buy` latency: run `buy` mode with a second funded wallet.\n',
+  );
+}
+
 async function main() {
-  if (!['mint-list', 'concurrent-list', 'buy', 'delist', 'cycle'].includes(mode)) {
-    console.log('Usage: node scripts/stress-test.mjs <mint-list|concurrent-list|cycle|buy|delist> [--count N] [--mint ADDR] [--keypair PATH]');
+  if (!['mint-list', 'concurrent-list', 'buy', 'delist', 'cycle', 'bench'].includes(mode)) {
+    console.log('Usage: node scripts/stress-test.mjs <mint-list|concurrent-list|bench|cycle|buy|delist> [--count N] [--mint ADDR] [--keypair PATH]');
     process.exit(1);
   }
   const connection = new Connection(RPC, 'confirmed');
@@ -323,6 +425,7 @@ async function main() {
   if (mode === 'buy') await runBuy(connection, payer);
   else if (mode === 'delist') await runDelist(connection, payer);
   else if (mode === 'cycle') await runCycle(connection, payer);
+  else if (mode === 'bench') await runBench(connection, payer);
   else await runMintList(connection, payer, { concurrent: mode === 'concurrent-list' });
 
   console.log('\n✅ Done.\n');

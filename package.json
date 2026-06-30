@@ -15,7 +15,8 @@
     "test:ui": "vitest --ui",
     "stress:mint-list": "node scripts/stress-test.mjs mint-list --count 10",
     "stress:concurrent": "node scripts/stress-test.mjs concurrent-list --count 8",
-    "stress": "node scripts/stress-test.mjs"
+    "stress": "node scripts/stress-test.mjs",
+    "bench": "node scripts/stress-test.mjs bench --count 5"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
