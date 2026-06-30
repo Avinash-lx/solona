@@ -41,11 +41,39 @@ export async function sendAndConfirm(
   tx.recentBlockhash = latest.blockhash;
   tx.feePayer = wallet.publicKey;
 
-  // wallet-adapter handles signing + sending in one call.
-  const signature = await wallet.sendTransaction(tx, connection, {
-    skipPreflight: false,
-    preflightCommitment: 'confirmed',
-  });
+  // Prefer signing locally and sending through OUR (known-good) RPC connection
+  // instead of letting the wallet send via its own node. Some wallets (notably
+  // Solflare) route preflight simulation through their internal RPC, which can
+  // return an opaque "Internal error" (JSON-RPC -32603) even for a valid tx.
+  // Sending the signed tx ourselves uses the app's configured RPC and yields
+  // real simulation logs on failure.
+  let signature: string;
+  try {
+    if (typeof wallet.signTransaction === 'function') {
+      const signed = await wallet.signTransaction(tx);
+      signature = await connection.sendRawTransaction(signed.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+    } else {
+      signature = await wallet.sendTransaction(tx, connection, {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+    }
+  } catch (err) {
+    // web3.js SendTransactionError carries the program logs — surface them so
+    // a real failure is actionable instead of an opaque wallet message.
+    const logs = (err as { logs?: string[] | null }).logs;
+    if (Array.isArray(logs) && logs.length > 0) {
+      // eslint-disable-next-line no-console
+      console.error('Transaction simulation failed. Program logs:\n' + logs.join('\n'));
+      throw new Error(
+        `${(err as Error).message ?? 'Transaction failed'} — Program logs: ${logs.join(' | ')}`,
+      );
+    }
+    throw err;
+  }
   options.onStage?.('sent', signature);
 
   const confirmed = await connection.confirmTransaction(
