@@ -12,7 +12,10 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "stress:mint-list": "node scripts/stress-test.mjs mint-list --count 10",
+    "stress:concurrent": "node scripts/stress-test.mjs concurrent-list --count 8",
+    "stress": "node scripts/stress-test.mjs"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
