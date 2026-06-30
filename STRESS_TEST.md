@@ -112,6 +112,13 @@ All scripts accept:
 | `MARKET` | `devnet-marketplace` | must match `VITE_MARKETPLACE_NAME` |
 | `KEYPAIR` | `~/.config/solana/id.json` | signer (also `--keypair`) |
 | `URI` | a public sample | metadata JSON for minted NFTs |
+| `DELAY` | `400` (ms) | pause between txs to avoid public-RPC 429s (also `--delay`; set `0` with a dedicated RPC) |
+
+> **Seeing `429 Too Many Requests`?** That's the free public Devnet RPC
+> throttling — not your program. The script now throttles (`DELAY`) and retries
+> transient errors automatically, and won't crash on a background rate-limit.
+> For heavy runs, pass a dedicated RPC and drop the delay:
+> `RPC="https://devnet.helius-rpc.com/?api-key=KEY" DELAY=0 node scripts/stress-test.mjs concurrent-list --count 25`
 
 Example, hammering through a dedicated RPC:
 ```bash
